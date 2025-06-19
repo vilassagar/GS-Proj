@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.pool import QueuePool
 from dotenv import load_dotenv
+from typing import Optional
 
 # Todo add modifications as per the working env
 load_dotenv(".env", override=True)
@@ -34,11 +35,22 @@ class Settings(BaseSettings):
 
     aws_s3_bucket: str = "egramdisha-files"
 
+    # AWS Configuration (optional fields)
+    aws_access_key_id: Optional[str] = None
+    aws_secret_access_key: Optional[str] = None
+    aws_default_region: Optional[str] = None
+
+    # Application Environment (optional fields)
+    environment: Optional[str] = "development"
+    debug: Optional[bool] = True
+
     # UPLOAD_FOLDER: str = "upload/"
     # ALLOWED_EXTENSIONS: set = {"pdf", "jpg", "jpeg", "png"}
 
     class Config:
         env_file = ".env"
+        # Allow extra fields that might be in .env but not defined in the model
+        extra = "ignore"
 
 
 settings = Settings()
@@ -73,4 +85,3 @@ def get_db():
         yield db
     finally:
         db.close()
-
