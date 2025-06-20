@@ -34,53 +34,71 @@ class AuthService:
     @staticmethod
     def send_otp(ph_no: str, db: Session):
         """
-            Sending OTP for logging in
+            Sending OTP for logging in - Development Mode (No SMS)
         """
 
-        print("In Service Layer")
+        print("🔧 DEVELOPMENT MODE: OTP Service")
 
         user = UserDal.get_user_by_mobile(mobile_number=ph_no, db=db)
 
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Generate a 6-digit OTP
-        otp = ''.join(random.choices(string.digits, k=6))
+        # Check if we're in development mode
+        is_development = (
+            getattr(settings, 'environment', 'development') == 'development' or
+            settings.twilio_account_sid == "your_twilio_account_sid_here" or
+            settings.twilio_account_sid.startswith("your_")
+        )
 
-        print("OTP generated: ", otp)
-
-        try:
-            message_sid = None
-
-            # Send OTP via Twilio
-            if user.mobile_number == ph_no:
+        if is_development:
+            print(f"📱 DEVELOPMENT: Bypassing OTP for {ph_no}")
+            print("💡 Using default OTP: 1111")
+            
+            # Store a fixed OTP for development
+            AuthDal.store_otp(db, ph_no, "1111", "dev_bypass_mode")
+            
+            return {
+                "message": "OTP bypassed in development mode", 
+                "dev_otp": "1111",
+                "message_id": "dev_bypass"
+            }
+        else:
+            # Production mode - would use real Twilio
+            # Generate a 6-digit OTP
+            otp = ''.join(random.choices(string.digits, k=6))
+            print("OTP generated: ", otp)
+            
+            try:
+                # Import here to avoid errors if Twilio is not configured
+                from app.utils.twilio_utils import send_sms
                 message_sid = send_sms(ph_no, otp)
-                # message_sid = "test123"
-            else:
-                raise HTTPException(status_code=404, detail="Please use mobile numer and not whatsapp number for"
-                                                            " OTP validation")
-
-            # Todo check whether we need to send OTP to whatsapp number also?
-            # integrate whatsapp OTP also
-            # if user.whatsapp_number == ph_no:
-            #     message_sid = send_sms(ph_no, otp)
-
-        except Exception as e:
-            print("Getting Twilio Exception: ", e, '\n', str(e))
-            raise HTTPException(status_code=500, detail="Twilio Exception")
-
-        # Store OTP in the database (optional, for verification later)
-        AuthDal.store_otp(db, ph_no, otp, message_sid)
-        # AuthDal.store_otp(db, ph_no, '1111', message_sid)
-
-        return {"message": "OTP sent successfully", "message_id": message_sid}
+                AuthDal.store_otp(db, ph_no, otp, message_sid)
+                
+                return {"message": "OTP sent successfully", "message_id": message_sid}
+                
+            except Exception as e:
+                print("Twilio Exception: ", e)
+                raise HTTPException(status_code=500, detail="SMS service error")
 
     @staticmethod
     def verify_otp(mobile_number: str, otp: str, db: Session):
 
         user = UserDal.get_user_by_mobile_or_whatsapp_number(db=db, mobile_number=mobile_number)
 
-        if not AuthDal.verify_user_otp(db=db, user_id=user.id, otp=otp):
+        # In development, always accept "1111" as valid OTP
+        is_development = (
+            getattr(settings, 'environment', 'development') == 'development' or
+            settings.twilio_account_sid == "your_twilio_account_sid_here"
+        )
+        
+        if is_development and otp == "1111":
+            print("🔧 DEVELOPMENT: Accepting default OTP 1111")
+            otp_valid = True
+        else:
+            otp_valid = AuthDal.verify_user_otp(db=db, user_id=user.id, otp=otp)
+
+        if not otp_valid:
             raise HTTPException(400, "Invalid or Expired OTP provided")
 
         access_token = VxJWTUtils.create_access_token(

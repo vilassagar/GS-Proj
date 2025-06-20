@@ -19,6 +19,7 @@ class DocumentType(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100), unique=True)
+    name_english: Mapped[str] = mapped_column(String(100), unique=True, nullable=True)
     is_mandatory: Mapped[bool] = mapped_column(Boolean, default=True)
 
     created_by: Mapped[Optional[int]] = mapped_column(

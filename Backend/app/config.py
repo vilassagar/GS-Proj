@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     # Application Environment (optional fields)
     environment: Optional[str] = "development"
     debug: Optional[bool] = True
+    
+    # Development settings
+    bypass_otp: Optional[bool] = True  # Set to False in production
 
     # UPLOAD_FOLDER: str = "upload/"
     # ALLOWED_EXTENSIONS: set = {"pdf", "jpg", "jpeg", "png"}

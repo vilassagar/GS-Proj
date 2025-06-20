@@ -1,22 +1,25 @@
 from fastapi import Request, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
+from starlette.responses import JSONResponse
 
 from app.core.core_exception import UnauthorizedException
 from app.models.enums.vx_api_perms_enum import VxAPIPermsEnum
 from app.utils.jwt_utils import VxJWTUtils
 from app.utils.vx_api_perms_utils import VxAPIPermsUtils
 
-# Explicitly adding these two below paths to public
+# Explicitly adding these paths to public
 VxAPIPermsUtils.set_perm_get(path='/', perm=VxAPIPermsEnum.PUBLIC)
 VxAPIPermsUtils.set_perm_get(path="/docs", perm=VxAPIPermsEnum.PUBLIC)
 VxAPIPermsUtils.set_perm_get(path="/openapi.json", perm=VxAPIPermsEnum.PUBLIC)
+VxAPIPermsUtils.set_perm_get(path="/.well-known/gpc.json", perm=VxAPIPermsEnum.PUBLIC)
+VxAPIPermsUtils.set_perm_get(path="/favicon.ico", perm=VxAPIPermsEnum.PUBLIC)
 
 
 class ApiChecksMW(BaseHTTPMiddleware):
 
-    def __int__(self, app: ASGIApp):
-        print("IN Middleware Initializing middleware")
+    def __init__(self, app: ASGIApp):
+        print("Initializing middleware")
         super().__init__(app)
 
     @staticmethod
@@ -29,7 +32,7 @@ class ApiChecksMW(BaseHTTPMiddleware):
         try:
             auth_header = request.headers.get("Authorization")
 
-            if not auth_header or not auth_header.startswith("Bearer"):
+            if not auth_header or not auth_header.startswith("Bearer "):
                 raise ValueError("Invalid Auth Header")
 
             # Getting the part after Bearer
@@ -48,7 +51,6 @@ class ApiChecksMW(BaseHTTPMiddleware):
                 raise UnauthorizedException("Token is missing Subject claims. i.e user_id")
             return sub
 
-        # Todo handle appr errors
         except ValueError as e:
             raise ValueError(str(e))
         except UnauthorizedException:
@@ -64,6 +66,7 @@ class ApiChecksMW(BaseHTTPMiddleware):
 
         print("In Middleware: ", method, path)
 
+        # Handle OPTIONS requests (CORS preflight)
         if request.method == "OPTIONS":
             print("Calling Options method")
             return await call_next(request)
@@ -71,32 +74,58 @@ class ApiChecksMW(BaseHTTPMiddleware):
         try:
             print("Processing Middleware")
 
+            # Check if API is public
             if VxAPIPermsUtils.is_api_public(method=method, path=path):
+                print(f"Public API: {method} {path}")
                 return await call_next(request)
 
+            # Check for authentication header
             auth_header = request.headers.get("Authorization")
+            print("Printing request auth header: ", auth_header)
 
-            if auth_header and not auth_header.startswith("Bearer "):
-                raise UnauthorizedException("Invalid Token")
+            # If no auth header for protected route, return 401
+            if not auth_header:
+                print("No Authorization header found for protected route")
+                return JSONResponse(
+                    status_code=401,
+                    content={"message": "Authorization header required"}
+                )
 
-            print("Printing request: ", request.headers.get("Authorization"))
+            # Validate auth header format
+            if not auth_header.startswith("Bearer "):
+                print("Invalid Authorization header format")
+                return JSONResponse(
+                    status_code=401,
+                    content={"message": "Invalid Authorization header format"}
+                )
 
-            # Todo refactor and optimize below
-            # Validating JWT and getting user_id
+            # Validate JWT and get user_id
             user_id = await ApiChecksMW.__read_jwt(request)
             request.state.user_id = user_id
 
-            print("Request Received: ", request.state.user_id)
+            print("Request Received with user_id: ", request.state.user_id)
 
             response = await call_next(request)
 
-            print("Response Recieved: ", response.__dict__)
+            print("Response Received: ", response.status_code)
 
             return response
 
-        except UnauthorizedException:
-            return HTTPException(401, "UnAuthorized Exception")
-
-        # finally:
-        #     db.close()
-
+        except ValueError as e:
+            print(f"ValueError in middleware: {e}")
+            return JSONResponse(
+                status_code=401,
+                content={"message": "Invalid authorization token"}
+            )
+        except UnauthorizedException as e:
+            print(f"UnauthorizedException in middleware: {e}")
+            return JSONResponse(
+                status_code=401,
+                content={"message": "Unauthorized"}
+            )
+        except Exception as e:
+            print(f"Unexpected error in middleware: {e}")
+            return JSONResponse(
+                status_code=500,
+                content={"message": "Internal server error"}
+            )
