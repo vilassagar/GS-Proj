@@ -15,7 +15,7 @@ from app.core.core_exceptions import UnauthorizedException, InvalidRequestExcept
     NotFoundException, ConflictException, NotAcceptable
 from app.routers.upload import upload_v1
 from app.routers.government_docs import government_docs
-
+from app.routers.dynamic_documents import dynamic_documents_v1
 
 # todo check whether we need API Support
 # api_key_header = APIKeyHeader()
@@ -58,7 +58,7 @@ def create_app() -> FastAPI:
     app.include_router(users_v1.router)
     app.include_router(upload_v1.router)
     app.include_router(government_docs.router)
-
+    app.include_router(dynamic_documents_v1.router)
     # Add API checks middleware after CORS middleware
     app.add_middleware(ApiChecksMW)
 

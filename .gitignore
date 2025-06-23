@@ -196,3 +196,4 @@ cython_debug/
 /Backend/venvgs
 Backend/alembic/versions/33192eceb1e9_new_initial_migration.py
 Backend/alembic/versions/33192eceb1e9_new_initial_migration.py
+/Backend/gsvenv

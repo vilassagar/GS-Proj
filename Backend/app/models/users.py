@@ -46,11 +46,10 @@ class User(Base, TimestampMixin):
         ForeignKey('users.id')
     )
 
-    # last_status_change: Mapped[Optional[datetime]] = mapped_column(DateTime)
-
     # Relations
     role: Mapped["Role"] = relationship("Role", back_populates="users")
 
+    # Fixed for Python 3.8
     documents: Mapped[List["UserDocument"]] = relationship(
         "UserDocument",
         back_populates="user",
@@ -65,7 +64,5 @@ class User(Base, TimestampMixin):
 
     documents_uploaded: Mapped[bool] = mapped_column(Boolean, nullable=True,default=False)
 
-    # Storing list of OTP's for user
-    # otps: Mapped[List["UserOTP"]] = relationship("UserOTP", back_populates="user")
     # For now storing OTP's for user as single entry only instead of List of OTPs
     otp: Mapped["UserOTP"] = relationship("UserOTP", back_populates="user", uselist=False)

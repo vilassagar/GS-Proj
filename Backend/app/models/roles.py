@@ -14,5 +14,5 @@ class Role(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(50), unique=True)
     description: Mapped[Optional[str]] = mapped_column(String(255))
 
-    # Relationships
+    # Relationships - Fixed for Python 3.8
     users: Mapped[List["User"]] = relationship(back_populates="role")
