@@ -86,15 +86,83 @@ def create_seed_data():
             else:
                 print(f"  ⏭️  Yojana already exists: {yojana_data['name']}")
         
-        # 4. Create Document Types
+        # 4. Create Document Types - Complete List with English Names
         print("📄 Creating document types...")
         document_types_data = [
-            {"name": "पासपोर्ट", "is_mandatory": True},           # Passport
-            {"name": "आधार कार्ड", "is_mandatory": True},        # Aadhar Card
-            {"name": "ड्रायव्हिंग लायसन्स", "is_mandatory": False}, # Driving License
-            {"name": "शिक्षण प्रमाणपत्र", "is_mandatory": True},   # Education Certificate
-            {"name": "अनुभव प्रमाणपत्र", "is_mandatory": False},    # Experience Certificate
-            {"name": "जाती प्रमाणपत्र", "is_mandatory": False},    # Caste Certificate
+            # Basic mandatory documents
+            {"name": "फोटो", "name_english": "Photo", "is_mandatory": True},
+            {"name": "आधार कार्ड", "name_english": "Adhar Card", "is_mandatory": True},
+            {"name": "पॅन कार्ड", "name_english": "Pan Card", "is_mandatory": True},
+            {"name": "रेशनकार्ड प्रत", "name_english": "Ration Card Copy", "is_mandatory": False},
+            {"name": "जन्मदाखला", "name_english": "Birth Certificate", "is_mandatory": True},
+            
+            # Caste related documents
+            {"name": "जातीचा दाखला", "name_english": "Caste Certificate", "is_mandatory": False},
+            {"name": "जात पडताळणी प्रमाणपत्र", "name_english": "Cast Validation Certificate", "is_mandatory": False},
+            
+            # Travel document
+            {"name": "पासपोर्ट", "name_english": "Passport", "is_mandatory": False},
+            
+            # Education documents - SSC
+            {"name": "दहावी गुणपत्रक", "name_english": "SSC Marklist", "is_mandatory": True},
+            {"name": "दहावी प्रमाणपत्र", "name_english": "SSC Certificate", "is_mandatory": True},
+            
+            # Education documents - HSC
+            {"name": "बारावी गुणपत्रक", "name_english": "HSC Marklist", "is_mandatory": False},
+            {"name": "बारावी प्रमाणपत्र", "name_english": "HSC Certificate", "is_mandatory": False},
+            {"name": "शाळा सोडल्याचा दाखला/TC", "name_english": "Leaving Certificate/Transcript Certificate", "is_mandatory": False},
+            
+            # Diploma
+            {"name": "पदविका गुणपत्रक", "name_english": "Diploma Marklist", "is_mandatory": False},
+            {"name": "पदविका प्रमाणपत्र", "name_english": "Diploma Certificate", "is_mandatory": False},
+            
+            # Degree
+            {"name": "पदवी गुणपत्रक", "name_english": "Degree Marklist", "is_mandatory": False},
+            {"name": "पदवी प्रमाणपत्र", "name_english": "Degree Certificate", "is_mandatory": False},
+            
+            # Post Graduate
+            {"name": "पदव्युत्तर गुणपत्रक", "name_english": "Post Graduate Marklist", "is_mandatory": False},
+            {"name": "पदव्युत्तर प्रमाणपत्र", "name_english": "Post Graduate Certificate", "is_mandatory": False},
+            
+            # PhD
+            {"name": "डॉक्टरेट गुणपत्रक", "name_english": "PhD Marklist", "is_mandatory": False},
+            {"name": "डॉक्टरेट प्रमाणपत्र", "name_english": "PhD Certificate", "is_mandatory": False},
+            
+            # Computer Certificate
+            {"name": "MS-CIT", "name_english": "MS-CIT Certificate", "is_mandatory": False},
+            
+            # Appointment related documents
+            {"name": "नेमणुक परीक्षा हॉल तिकीट", "name_english": "Hall Ticket of Exam", "is_mandatory": False},
+            {"name": "नेमणुक आदेश", "name_english": "Selection Order", "is_mandatory": True},
+            {"name": "हजर अर्ज", "name_english": "Application of Presence", "is_mandatory": False},
+            {"name": "पगार बँक खाते पासबुक", "name_english": "Salary Account Bank Passbook", "is_mandatory": True},
+            {"name": "ओळखपत्र", "name_english": "Identity Card", "is_mandatory": True},
+            
+            # Service related orders
+            {"name": "कायम केलेचा आदेश", "name_english": "Permenent Order", "is_mandatory": False},
+            {"name": "सेवा परीक्षा उत्तीर्ण आदेश", "name_english": "Service Exam Passed Order", "is_mandatory": False},
+            {"name": "स्थायित्व लाभाचा आदेश", "name_english": "Confirmation Order", "is_mandatory": False},
+            
+            # Assured Career Progression Scheme orders
+            {"name": "12 वर्षे - सेवांतर्गत आश्वासित प्रगती योजना आदेश", "name_english": "12 Yrs-Sevantargat Ashwashit Pragati Yojana Benefit Order", "is_mandatory": False},
+            {"name": "24 वर्षे - सेवांतर्गत आश्वासित प्रगती योजना आदेश", "name_english": "24 Yrs-Sevantargat Ashwashit Pragati Yojana Benefit Order", "is_mandatory": False},
+            {"name": "10 वर्षे - सुधारित सेवांतर्गत आश्वासित प्रगती योजना आदेश", "name_english": "10 Yrs-Sudharit Sevantargat Ashwashit Pragati Yojana Benefit Order", "is_mandatory": False},
+            {"name": "20 वर्षे - सुधारित सेवांतर्गत आश्वासित प्रगती योजना आदेश", "name_english": "20 Yrs-Sudharit Sevantargat Ashwashit Pragati Yojana Benefit Order", "is_mandatory": False},
+            {"name": "30 वर्षे - सुधारित सेवांतर्गत आश्वासित प्रगती योजना आदेश", "name_english": "30 Yrs-Sudharit Sevantargat Ashwashit Pragati Yojana Benefit Order", "is_mandatory": False},
+            
+            # Award and increment orders
+            {"name": "उत्कृष्ट/अतिउत्कृष्ट वेतनवाढ आदेश", "name_english": "Utkrushth/AtiUtkrushth Increment Order", "is_mandatory": False},
+            {"name": "आदर्श ग्रामसेवक पुरस्कार प्राप्त आदेश", "name_english": "Adarsh Gramsevak Puraskar Order", "is_mandatory": False},
+            {"name": "आदर्श वेतनवाढ आदेश", "name_english": "Adarsh Gramsevak Puraskar Increment Order", "is_mandatory": False},
+            
+            # Other service documents
+            {"name": "सेवापुस्तक प्रत", "name_english": "Service book copy", "is_mandatory": False},
+            {"name": "पदोन्नती आदेश", "name_english": "Promotion Order", "is_mandatory": False},
+            {"name": "जिल्हा बदली असलेस आदेश (नाहरकत दाखला)", "name_english": "District Transfer Order (NOC)", "is_mandatory": False},
+            
+            # Special certificates
+            {"name": "दिव्यांग प्रमाणपत्र", "name_english": "Handicapped Certificate", "is_mandatory": False},
+            {"name": "मान्यता प्रमाणपत्र - कागदपत्र युनियन वेबसाईटवर टाकणेसाठी", "name_english": "Consent Certificate for Document on Union Domain", "is_mandatory": False},
         ]
         
         for doc_data in document_types_data:

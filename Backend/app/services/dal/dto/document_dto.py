@@ -9,6 +9,7 @@ class DocumentTypeDTO(ToCamel):
             self,
             id: int,
             name: str,
+            name_english: Optional[str],
             is_mandatory: bool,
             created_by: Optional[int],
             updated_by: Optional[int],
@@ -18,6 +19,7 @@ class DocumentTypeDTO(ToCamel):
     ):
         self.id = id
         self.name = name
+        self.name_english = name_english
         self.is_mandatory = is_mandatory
         self.created_by = created_by
         self.updated_by = updated_by
@@ -30,6 +32,7 @@ class DocumentTypeDTO(ToCamel):
         return DocumentTypeDTO(
             id=doc_type.id,
             name=doc_type.name,
+            name_english=getattr(doc_type, 'name_english', None),
             is_mandatory=doc_type.is_mandatory,
             created_by=doc_type.created_by,
             updated_by=doc_type.updated_by,
@@ -44,6 +47,7 @@ class UserDocumentDTO(ToCamel):
             self,
             id: int,
             document_type: str,
+            document_type_english: Optional[str],
             user_id: int,
             document_type_id: int,
             file_path: str,
@@ -58,6 +62,7 @@ class UserDocumentDTO(ToCamel):
         self.user_id = user_id
         self.document_type_id = document_type_id
         self.document_type = document_type
+        self.document_type_english = document_type_english
         self.file_path = file_path
         self.verification_status = verification_status
         self.created_by = created_by
@@ -71,6 +76,7 @@ class UserDocumentDTO(ToCamel):
         return UserDocumentDTO(
             id=user_doc.id,
             document_type=user_doc.document_type.name,
+            document_type_english=getattr(user_doc.document_type, 'name_english', None),
             user_id=user_doc.user_id,
             document_type_id=user_doc.document_type_id,
             file_path=user_doc.file_path,

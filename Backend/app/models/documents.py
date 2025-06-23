@@ -18,8 +18,8 @@ class DocumentType(Base, TimestampMixin):
     __tablename__ = 'document_types'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(100), unique=True)
-    name_english: Mapped[str] = mapped_column(String(100), unique=True, nullable=True)
+    name: Mapped[str] = mapped_column(String(200), unique=True)  # Marathi name
+    name_english: Mapped[Optional[str]] = mapped_column(String(200))  # English name
     is_mandatory: Mapped[bool] = mapped_column(Boolean, default=True)
 
     created_by: Mapped[Optional[int]] = mapped_column(
