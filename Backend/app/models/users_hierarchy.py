@@ -7,20 +7,13 @@ from app.models.base import TimestampMixin
 
 
 class District(Base, TimestampMixin):
-    """
-            District -> Zilla Parishad
-    """
-
     __tablename__ = 'districts'
-
+    
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, index=True)
-    blocks: Mapped[List["Block"]] = relationship("Block", back_populates="district")
-
+    
     users: Mapped[List["User"]] = relationship("User", back_populates="district")
-
-    blocks: Mapped[List["Block"]] = relationship("Block", back_populates="district")
-
+    blocks: Mapped[List["Block"]] = relationship("Block", back_populates="district")  # Keep only one
 
 class Block(Base, TimestampMixin):
     """

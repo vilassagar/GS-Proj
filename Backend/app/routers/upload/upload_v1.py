@@ -1,32 +1,26 @@
-from fastapi import FastAPI,APIRouter, Depends, File, UploadFile, Depends, HTTPException, Form
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, Form
 from sqlalchemy.orm import Session
-from database import get_db, engine
-from models import Base
-from ocr_service import MarathiOCRService
-from search_service import SearchService
-import shutil
-import os
 from typing import Optional, List
-from sqlalchemy.orm import Session
+import os  # ✅ Added missing import
+import shutil  # ✅ Added missing import
 
 from app.config import get_db
+from app.services.ocr_service import MarathiOCRService
+from app.services.search_service import SearchService
 from app.models.enums.vx_api_perms_enum import VxAPIPermsEnum
 from app.services.document_service import DocumentTypeService
 from app.utils.vx_api_perms_utils import VxAPIPermsUtils
 
 router = APIRouter(
     prefix="/v1/upload",
-    tags=["gramsevak"],
+    tags=["upload"],  # ✅ Changed from "gramsevak" to "upload" for consistency
     responses={404: {"description": "Not Found"}}
 )
 
 ocr_service = MarathiOCRService()
 
 VxAPIPermsUtils.set_perm_get(path=router.prefix + '/getdocumenttype', perm=VxAPIPermsEnum.PUBLIC)
-@router.get("/getdocumenttype",
-            # response_model=List[GramsevakListItem]
-            )
+@router.get("/getdocumenttype")
 async def get_all_document_types(db: Session = Depends(get_db)):
     return DocumentTypeService.get_all_document_types(db=db)
 
@@ -53,7 +47,7 @@ async def upload_book(
         extracted_data = ocr_service.extract_text_from_pdf(file_path)
         
         # Save to database
-        from models import Book, Page, Word
+        from app.models.books import Book, Page, Word  # ✅ Fixed import
         
         book = Book(
             title=title,
@@ -159,7 +153,7 @@ async def semantic_search(
 @router.get("/books")
 async def get_books(db: Session = Depends(get_db)):
     """Get all books"""
-    from models import Book
+    from app.models.books import Book  # ✅ Fixed import
     books = db.query(Book).all()
     return [
         {

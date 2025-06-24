@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Dict, Optional
 from sentence_transformers import SentenceTransformer
 import re
-from models import Book, Page, Word
+from app.models.books import Book, Page, Word  # ✅ Fixed import
 
 class SearchService:
     def __init__(self, db: Session):

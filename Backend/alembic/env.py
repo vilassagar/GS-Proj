@@ -35,7 +35,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Get the DATABASE_URL from environment variables
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL =postgresql://postgres:#Mystack9393#@localhost:5432/Gs_DB
 
 # Set the sqlalchemy.url in alembic config
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
