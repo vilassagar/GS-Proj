@@ -19,6 +19,8 @@ from app.models.users_hierarchy import District, Block, GramPanchayat
 from app.models.department import Department
 from app.models.gr_yojana import Yojana, GR
 from app.models.books import Book
+from app.models.books import Page
+from app.models.books import Word
 from app.models.documents import DocumentType, UserDocument
 from app.models.otp import UserOTP
 
