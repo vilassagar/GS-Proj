@@ -76,8 +76,12 @@ function Login() {
       toast.error("कृपया OTP प्रविष्ट करा");
       return;
     }
+    let details = {
+      mobileNumber: `+91${loginDetails?.mobileNumber}`,
+      otp: loginDetails?.otp,
+    };
 
-    let response = await login(loginDetails);
+    let response = await login(details);
     if (response?.status === "success") {
       updateUser(response?.data);
       navigate("/");
