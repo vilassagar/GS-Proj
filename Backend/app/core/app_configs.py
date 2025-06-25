@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.openapi.utils import get_openapi
 
 from app.core.http_errors import HttpErrors
 from app.routers import file_search_poc
@@ -17,27 +18,79 @@ from app.routers.upload import upload_v1
 from app.routers.government_docs import government_docs
 from app.routers.dynamic_documents import dynamic_documents_v1
 
-# todo check whether we need API Support
-# api_key_header = APIKeyHeader()
+# OAuth2 scheme for Swagger UI
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/v1/auth/login",  # This should match your login endpoint
+    description="JWT token authentication"
+)
 
-
-# todo check auth
-oauth2_schema = OAuth2PasswordBearer(tokenUrl="token")
-# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="v1/auth/login")
-
+# Alternative: Bearer token scheme
+bearer_scheme = HTTPBearer(
+    scheme_name="Bearer Token",
+    description="Enter your JWT token"
+)
 
 def create_app() -> FastAPI:
     '''
-        For creating and configuring the FastAPI application
+    For creating and configuring the FastAPI application
     '''
 
     app = FastAPI(
-        title="GramSevak Seva",
-        description="APIs for management",
+        title="GramSevak Seva API",
+        description="APIs for GramSevak management with JWT authentication",
         version="1.0.0",
         docs_url="/docs",
         redoc_url="/redoc"
     )
+
+    # Custom OpenAPI schema with security
+    def custom_openapi():
+        if app.openapi_schema:
+            return app.openapi_schema
+        
+        openapi_schema = get_openapi(
+            title="GramSevak Seva API",
+            version="1.0.0",
+            description="APIs for GramSevak management",
+            routes=app.routes,
+        )
+        
+        # Add security schemes
+        openapi_schema["components"]["securitySchemes"] = {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "Enter your JWT token"
+            },
+            "OAuth2PasswordBearer": {
+                "type": "oauth2",
+                "flows": {
+                    "password": {
+                        "tokenUrl": "/v1/auth/login",
+                        "scopes": {}
+                    }
+                }
+            }
+        }
+        
+        # Apply security to all protected routes
+        for path, path_item in openapi_schema["paths"].items():
+            for method, operation in path_item.items():
+                if method.lower() in ["get", "post", "put", "patch", "delete"]:
+                    # Skip public endpoints
+                    if any(tag in operation.get("tags", []) for tag in ["auth"]) and "login" in path:
+                        continue
+                    if any(tag in operation.get("tags", []) for tag in ["auth"]) and "sendOtp" in path:
+                        continue
+                    
+                    # Add security to protected endpoints
+                    operation["security"] = [{"BearerAuth": []}]
+        
+        app.openapi_schema = openapi_schema
+        return app.openapi_schema
+
+    app.openapi = custom_openapi
 
     app.add_middleware(
         CORSMiddleware,
@@ -59,6 +112,7 @@ def create_app() -> FastAPI:
     app.include_router(upload_v1.router)
     app.include_router(government_docs.router)
     app.include_router(dynamic_documents_v1.router)
+    
     # Add API checks middleware after CORS middleware
     app.add_middleware(ApiChecksMW)
 
