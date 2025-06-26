@@ -54,7 +54,10 @@ class ApiChecksMW(BaseHTTPMiddleware):
         except ValueError as e:
             raise ValueError(str(e))
         except UnauthorizedException:
-            raise Exception("Authorization failed")
+            raise UnauthorizedException("Authorization failed")
+        except Exception as e:
+            print(f"Unexpected error in JWT processing: {e}")
+            raise UnauthorizedException("Token processing failed")
 
     async def dispatch(self, request: Request, call_next):
         """

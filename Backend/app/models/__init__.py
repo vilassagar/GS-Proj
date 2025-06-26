@@ -1,4 +1,6 @@
 from app.models.books import Book
+from app.models.books import Page
+from app.models.books import Word
 from app.models.documents import UserDocument, DocumentType
 from app.models.users_hierarchy import District, Block, GramPanchayat
 from app.models.gr_yojana import GR, Yojana

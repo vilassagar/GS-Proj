@@ -19,6 +19,8 @@ from app.models.users_hierarchy import District, Block, GramPanchayat
 from app.models.department import Department
 from app.models.gr_yojana import Yojana, GR
 from app.models.books import Book
+from app.models.books import Page
+from app.models.books import Word
 from app.models.documents import DocumentType, UserDocument
 from app.models.otp import UserOTP
 
@@ -33,7 +35,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Get the DATABASE_URL from environment variables
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL =postgresql://postgres:#Mystack9393#@localhost:5432/Gs_DB
 
 # Set the sqlalchemy.url in alembic config
 config.set_main_option("sqlalchemy.url", DATABASE_URL)

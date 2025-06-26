@@ -33,7 +33,7 @@ class AuthDal:
         if otp_record:
             # Update the existing OTP record.
             otp_record.otp = otp
-            otp_record.expires_at_utc = expires_at
+            otp_record.expires_at = expires_at  # ✅ Fixed: removed _utc suffix
             otp_record.message_sid = message_sid
 
         else:
@@ -53,18 +53,16 @@ class AuthDal:
 
     @staticmethod
     def verify_user_otp(user_id: int, otp: str, db: Session) -> bool:
+        """
+        Verify user OTP by checking if it matches and hasn't expired
+        """
+        current_time = datetime.now(timezone.utc)
 
-        otp_expiry = datetime.now(timezone.utc) + timedelta(minutes=settings.otp_expiry_time)
-
-        # query = db.query(UserOTP)
-        #
-        # query = query.filter(and_(
-        #     UserOTP.user_id == user_id,
-        #     UserOTP.otp == otp,
-        #     UserOTP.expires_at_utc < otp_expiry
-        # )).scalar()
-        return db.query(UserOTP).filter(and_(
+        # ✅ Fixed: Correct logic - check if OTP hasn't expired yet
+        otp_record = db.query(UserOTP).filter(and_(
             UserOTP.user_id == user_id,
             UserOTP.otp == otp,
-            UserOTP.expires_at < otp_expiry
-        )).scalar()
+            UserOTP.expires_at > current_time  # ✅ Fixed: Check if NOT expired
+        )).first()
+
+        return otp_record is not None  # ✅ Fixed: Return boolean properly
