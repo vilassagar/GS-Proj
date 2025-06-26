@@ -77,13 +77,22 @@ export function SearchBar() {
           placeholder="पुस्तके आणि शासन निर्णय शोधा..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full px-4 py-3 pr-12 text-lg border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2 pr-12 text-md border border-gray-300 rounded-sm  focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            ✕
+          </button>
+        )}
         <button
           type="submit"
           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
         >
-          <Search size={24} />
+          <Search size={16} />
         </button>
       </div>
     </form>
