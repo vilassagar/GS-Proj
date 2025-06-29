@@ -11,7 +11,6 @@ import RSelect from "@/components/ui/RSelect";
 import { userStore } from "@/lib/store";
 import { getGramSevakById } from "@/services/gramsevak";
 import { documentMasterList } from "@/common/constants";
-// import { toast } from "@/components/ui/use-toast";
 import {
   getBlocksByDistrictId,
   getDistricts,
@@ -22,50 +21,65 @@ import toast from "react-hot-toast";
 
 const DocumentUploadSection = ({ doc }) => {
   const [file, setFile] = useState(null);
-  const [input, setInput] = useState("");
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [inputFields, setInputFields] = useState({});
 
   const handleFileChange = (f) => {
     setFile(f);
-    if (f && f.type.startsWith("image/")) {
-      setPreviewUrl(URL.createObjectURL(f));
-    } else {
-      setPreviewUrl(null);
-    }
+  };
+
+  const handleFieldChange = (name, value) => {
+    setInputFields((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = () => {
-    if (!file || (doc.fieldType !== "none" && !input)) {
-      return toast.error(
-        `कृपया "${doc.marathiName}" साठी सर्व आवश्यक माहिती भरा.`
-      );
+    if (!file) {
+      return toast.error(`कृपया "${doc.marathiName}" साठी फाईल अपलोड करा.`);
+    }
+
+    if (doc.fields) {
+      for (const field of doc.fields) {
+        if (field.required && !inputFields[field.name]) {
+          return toast.error(`कृपया "${field.label}" भरावे.`);
+        }
+      }
     }
 
     const formData = new FormData();
     formData.append("file", file);
-    if (doc.fieldType !== "none") {
-      formData.append("input", input);
-    }
+    doc.fields?.forEach((f) => {
+      formData.append(f.name, inputFields[f.name] || "");
+    });
     formData.append("documentType", doc.englishName);
 
-    console.log("Uploading:", {
+    const formPayload = {
       documentType: doc.englishName,
-      input,
-      file,
+      file: {
+        id: 0,
+        name: file?.name || "",
+        file: file || {},
+      },
+    };
+
+    // Add dynamic input fields
+    doc.fields?.forEach((f) => {
+      formPayload[f.name] = inputFields[f.name] || "";
     });
+
+    // Now log the object
+    console.log("Form Payload:", formPayload, file);
 
     toast.success(`${doc.marathiName} यशस्वीरित्या सबमिट झाले.`);
   };
 
   return (
-    <div className="border rounded-lg p-4 shadow-md space-y-1 bg-white ">
+    <div className="border rounded-lg p-4 shadow-md bg-white space-y-2">
       <h2 className="font-bold text-lg text-gray-800">
         {doc.marathiName}{" "}
         {doc.required && <span className="text-red-500">*</span>}
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* File upload */}
+        {/* File Upload */}
         <div className="space-y-2">
           <Label>
             अपलोड करा {doc.required && <span className="text-red-500">*</span>}
@@ -73,21 +87,63 @@ const DocumentUploadSection = ({ doc }) => {
           <FileUpload value={file} onChange={handleFileChange} />
         </div>
 
-        {/* Conditional input field */}
-        {doc.fieldType !== "none" && (
-          <div className="space-y-2">
-            <Label>
-              {doc.marathiName} तपशील{" "}
-              {doc.required && <span className="text-red-500">*</span>}
-            </Label>
-            <Input
-              placeholder={doc.placeholder || `${doc.marathiName} तपशील`}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              required={doc.required}
-            />
-          </div>
-        )}
+        {/* Dynamic Input Fields */}
+        {doc.fields?.map((field) => {
+          return (
+            <div className="space-y-1" key={field.name}>
+              <Label>
+                {field.label}{" "}
+                {field.required && <span className="text-red-500">*</span>}
+              </Label>
+
+              {field.type === "text" && (
+                <Input
+                  placeholder={field.placeholder}
+                  value={inputFields[field.name] || ""}
+                  onChange={(e) =>
+                    handleFieldChange(field.name, e.target.value)
+                  }
+                />
+              )}
+
+              {field.type === "select" && (
+                <select
+                  className="border p-2 rounded w-full"
+                  value={inputFields[field.name] || ""}
+                  onChange={(e) =>
+                    handleFieldChange(field.name, e.target.value)
+                  }
+                >
+                  <option value="">-- निवडा --</option>
+                  {field.options.map((opt, i) => (
+                    <option key={i} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {field.type === "radio" && (
+                <div className="flex space-x-4">
+                  {field.options.map((opt, i) => (
+                    <label key={i} className="flex items-center space-x-1">
+                      <input
+                        type="radio"
+                        name={field.name}
+                        value={opt}
+                        checked={inputFields[field.name] === opt}
+                        onChange={(e) =>
+                          handleFieldChange(field.name, e.target.value)
+                        }
+                      />
+                      <span>{opt}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className="text-right pt-2">
@@ -265,7 +321,7 @@ function Profile() {
         </TabsContent>
         <TabsContent value="documents">
           <Card>
-            <CardContent className="space-y-6 pt-6 md:grid grid-cols-2 gap-4">
+            <CardContent className=" pt-6 md:grid grid-cols-2 gap-4">
               {documentMasterList.map((doc) => (
                 <DocumentUploadSection key={doc.id} doc={doc} />
               ))}
