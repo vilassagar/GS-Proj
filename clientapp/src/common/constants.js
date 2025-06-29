@@ -49,9 +49,9 @@ export const documentMasterList = [
     id: 4,
     marathiName: "रेशन कार्ड प्रत",
     englishName: "Ration Card Copy",
-    fieldType: "none",
+    fieldType: "text",
     placeholder: "",
-    required: false,
+    required: true,
   },
   {
     id: 5,
