@@ -11,6 +11,7 @@ import RSelect from "@/components/ui/RSelect";
 import { userStore } from "@/lib/store";
 import { getGramSevakById } from "@/services/gramsevak";
 import { documentMasterList } from "@/common/constants";
+// import { toast } from "@/components/ui/use-toast";
 import {
   getBlocksByDistrictId,
   getDistricts,
@@ -35,7 +36,9 @@ const DocumentUploadSection = ({ doc }) => {
 
   const handleSubmit = () => {
     if (!file || (doc.fieldType !== "none" && !input)) {
-      return alert(`कृपया "${doc.marathiName}" साठी सर्व आवश्यक माहिती भरा.`);
+      return toast.error(
+        `कृपया "${doc.marathiName}" साठी सर्व आवश्यक माहिती भरा.`
+      );
     }
 
     const formData = new FormData();
@@ -45,14 +48,13 @@ const DocumentUploadSection = ({ doc }) => {
     }
     formData.append("documentType", doc.englishName);
 
-    // 👇 Replace this with your actual API upload call
     console.log("Uploading:", {
       documentType: doc.englishName,
       input,
       file,
     });
 
-    alert(`${doc.marathiName} यशस्वीरित्या सबमिट झाले.`);
+    toast.success(`${doc.marathiName} यशस्वीरित्या सबमिट झाले.`);
   };
 
   return (
