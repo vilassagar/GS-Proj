@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import RSelect from "@/components/ui/RSelect";
 import { userStore } from "@/lib/store";
 import { getGramSevakById } from "@/services/gramsevak";
+import { documentMasterList } from "@/common/constants";
+// import { toast } from "@/components/ui/use-toast";
 import {
   getBlocksByDistrictId,
   getDistricts,
@@ -18,23 +20,87 @@ import {
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-function Documents({ data }) {
+const DocumentUploadSection = ({ doc }) => {
+  const [file, setFile] = useState(null);
+  const [input, setInput] = useState("");
+  const [previewUrl, setPreviewUrl] = useState(null);
+
+  const handleFileChange = (f) => {
+    setFile(f);
+    if (f && f.type.startsWith("image/")) {
+      setPreviewUrl(URL.createObjectURL(f));
+    } else {
+      setPreviewUrl(null);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!file || (doc.fieldType !== "none" && !input)) {
+      return toast.error(
+        `कृपया "${doc.marathiName}" साठी सर्व आवश्यक माहिती भरा.`
+      );
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    if (doc.fieldType !== "none") {
+      formData.append("input", input);
+    }
+    formData.append("documentType", doc.englishName);
+
+    console.log("Uploading:", {
+      documentType: doc.englishName,
+      input,
+      file,
+    });
+
+    toast.success(`${doc.marathiName} यशस्वीरित्या सबमिट झाले.`);
+  };
+
   return (
-    <Card>
-      <CardContent className="space-y-4 pt-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {data?.documents.map((doc, index) => (
-            <div key={doc?.documentTypeId} className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <FileUpload value={doc} />
-              </div>
-            </div>
-          ))}
+    <div className="border rounded-lg p-4 shadow-md space-y-4 bg-white">
+      <h2 className="font-bold text-lg text-gray-800">
+        {doc.marathiName}{" "}
+        {doc.required && <span className="text-red-500">*</span>}
+      </h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* File upload */}
+        <div className="space-y-2">
+          <Label>
+            अपलोड करा {doc.required && <span className="text-red-500">*</span>}
+          </Label>
+          <FileUpload value={file} onChange={handleFileChange} />
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Conditional input field */}
+        {doc.fieldType !== "none" && (
+          <div className="space-y-2">
+            <Label>
+              {doc.marathiName} तपशील{" "}
+              {doc.required && <span className="text-red-500">*</span>}
+            </Label>
+            <Input
+              placeholder={doc.placeholder || `${doc.marathiName} तपशील`}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              required={doc.required}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="text-right pt-2">
+        <button
+          onClick={handleSubmit}
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg"
+        >
+          सबमिट करा
+        </button>
+      </div>
+    </div>
   );
-}
+};
 
 function BasicDetails({ data, designations, districts, blocks, panchayats }) {
   useEffect(() => {
@@ -196,7 +262,13 @@ function Profile() {
           />
         </TabsContent>
         <TabsContent value="documents">
-          <Documents data={gramSevak} />
+          <Card>
+            <CardContent className="space-y-6 pt-6">
+              {documentMasterList.map((doc) => (
+                <DocumentUploadSection key={doc.id} doc={doc} />
+              ))}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

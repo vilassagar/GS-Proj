@@ -29,22 +29,25 @@ export default function FileUpload({
   }, [value]);
 
   const handleChange = (event) => {
-    let newDoc = { ...doc };
-    if (event?.target?.files?.length) {
-      // set file name
-      // set file
-      // remove url
-      let file = event.target.files[0];
-      newDoc["name"] = file.name;
-      newDoc["file"] = file;
-      newDoc["url"] = "";
-    } else {
-      // remove file, name , url
-      newDoc = null;
-    }
+    const input = event.target;
 
-    setDoc(newDoc);
-    onChange(newDoc);
+    if (input?.files?.length) {
+      const file = input.files[0];
+      const newDoc = {
+        id: 0,
+        name: file.name,
+        file,
+        url: "",
+      };
+      setDoc(newDoc);
+      onChange(newDoc);
+
+      // ✅ Allow same file to be picked again
+      input.value = null;
+    } else {
+      setDoc(null);
+      onChange(null);
+    }
   };
 
   const handleBadgeClick = (base64Data) => async (event) => {
@@ -72,44 +75,38 @@ export default function FileUpload({
         "border-dashed shadow-none"
       )}
     >
-      <CardContent className="p-2 ">
-        {doc?.file || doc?.document || doc?.url ? (
-          <div className="flex flex column justify-between items-start ">
-            {isImage ? (
-              <img
-                src={
-                  doc?.url?.length
-                    ? doc?.fileData
-                    : URL.createObjectURL(doc?.file)
-                }
-                alt="Documents Preview"
-                style={{ maxWidth: "300px", marginTop: "10px" }}
-              />
-            ) : (
-              <div
-                onClick={handleBadgeClick(doc?.document)}
-                className="cursor-pointer"
-              >
-                {doc?.documentType}
-              </div>
-            )}
+      <CardContent className="p-2">
+        <div className="flex flex-col items-start space-y-1">
+          {/* ✅ Show uploaded file name if available */}
+          {doc?.file || doc?.document || doc?.url ? (
+            <>
+              <span className="text-sm text-gray-700 font-medium">
+                Uploaded File:
+              </span>
+              <span className="text-sm text-blue-600 break-all">
+                {doc?.file instanceof File
+                  ? doc.file.name
+                  : doc?.name || "फाईल"}
+              </span>
+            </>
+          ) : (
+            <span className="text-sm text-gray-500">No file uploaded</span>
+          )}
+
+          {/* ✅ Always show the Upload/Replace button */}
+          <div className="mt-2 group relative">
+            <Button variant="outline" size="sm">
+              <CloudUploadIcon className="h-4 w-4 mr-2" />
+              {doc?.file ? "Replace File" : "Upload File"}
+            </Button>
+            <Input
+              type="file"
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              onChange={handleChange}
+              accept={accept}
+            />
           </div>
-        ) : (
-          <div className=" border-red-500">
-            <div className="group relative ">
-              <Button variant="outline" size="sm">
-                <CloudUploadIcon className="h-4 w-4 mr-2" />
-                Upload File
-              </Button>
-              <Input
-                type="file"
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                onChange={handleChange}
-                accept={accept}
-              />
-            </div>
-          </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
