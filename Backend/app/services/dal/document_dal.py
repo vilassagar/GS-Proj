@@ -58,6 +58,7 @@ class DocumentTypeDal:
                 print(f"   Category in DB: '{dt.category}' -> DTO: '{dto.category}'")
                 print(f"   Instructions in DB: '{dt.instructions}' -> DTO: '{dto.instructions}'")
                 print(f"   Is Mandatory: {dt.is_mandatory} -> DTO: {dto.is_mandatory}")
+                print(f"   field_definitions: {dt.field_definitions} -> DTO: {dto.field_definitions}")
         
         return dtos
     

@@ -24,7 +24,7 @@ class DocumentType(BaseModel):
     instructions: Optional[str] = None
     max_file_size_mb: int = 5
     allowed_formats: List[str] = ["pdf", "jpg", "jpeg", "png", "doc", "docx"]
-    
+    field_definitions: Optional[Dict[str, Any]] = None
     class Config:
         from_attributes = True
 

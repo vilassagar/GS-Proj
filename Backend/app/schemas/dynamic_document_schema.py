@@ -29,7 +29,7 @@ class DocumentTypeResponseSchema(CamelModel):
     is_mandatory: bool
     category: Optional[str]
     instructions: Optional[str]
-    field_definitions: List[DocumentFieldSchema]
+    field_definitions: Optional[Dict[str, Any]] = None
 
 class DocumentUploadSchema(CamelModel):
     document_type_id: int

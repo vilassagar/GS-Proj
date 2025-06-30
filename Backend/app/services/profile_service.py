@@ -1,12 +1,10 @@
-# app/services/profile_service.py
+# app/services/profile_service.py - COMPLETE WORKING VERSION
 from fastapi import HTTPException, status, UploadFile
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 import os
 import uuid
 from datetime import datetime
-# Your existing imports should work, but make sure you have:
-from app.services.dal.document_dal import DocumentTypeDal
 
 try:
     import boto3
@@ -108,11 +106,11 @@ class ProfileService:
             {
                 "documentId": doc.id,
                 "documentTypeId": doc.document_type_id,
-                "documentTypeName": doc.document_type,
-                "documentTypeNameEnglish": doc.document_type_english,
+                "documentTypeName": getattr(doc, 'document_type', ''),
+                "documentTypeNameEnglish": getattr(doc, 'document_type_english', ''),
                 "filePath": doc.file_path,
                 "verificationStatus": doc.verification_status,
-                "uploadedAt": doc.created_at.isoformat(),
+                "uploadedAt": doc.created_at.isoformat() if doc.created_at else '',
                 "adminComments": getattr(doc, 'admin_comments', None)
             } for doc in documents
         ]
@@ -131,6 +129,135 @@ class ProfileService:
             "documents": document_responses,
             "validation": validation,
             "permissions": permissions
+        }
+    
+    @staticmethod
+    def validate_profile_completeness(db: Session, user_id: int) -> Dict[str, Any]:
+        """Validate if user's profile is complete - FIXED VERSION"""
+        
+        print(f"🔍 Starting profile validation for user {user_id}")
+        
+        user = UserDal.get_user_by_id(db, user_id)
+        if not user:
+            raise NotFoundException(f"User with ID {user_id} not found")
+        
+        # Check basic fields
+        missing_basic_fields = []
+        required_basic_fields = {
+            'first_name': 'firstName',
+            'last_name': 'lastName', 
+            'mobile_number': 'mobileNumber',
+            'email': 'email',
+            'district_id': 'districtId',
+            'block_id': 'blockId',
+            'gram_panchayat_id': 'gramPanchayatId'
+        }
+        
+        for field, camel_field in required_basic_fields.items():
+            if not getattr(user, field, None):
+                missing_basic_fields.append(camel_field)
+        
+        # Get ALL document types
+        print("🔍 Fetching document types for validation...")
+        try:
+            all_doc_types = DocumentTypeDal.get_all_document_types(db)
+            print(f"📊 Found {len(all_doc_types)} document types")
+        except Exception as e:
+            print(f"❌ Error fetching document types: {e}")
+            all_doc_types = []
+        
+        # Filter mandatory document types
+        mandatory_doc_types = []
+        for dt in all_doc_types:
+            try:
+                # Handle both DTO objects and regular objects
+                is_mandatory = getattr(dt, 'is_mandatory', False)
+                if is_mandatory:
+                    mandatory_doc_types.append(dt)
+            except Exception as e:
+                print(f"⚠️  Error checking mandatory status for doc type: {e}")
+                continue
+        
+        print(f"📊 Found {len(mandatory_doc_types)} mandatory document types")
+        
+        # Get user's uploaded documents
+        user_documents = UserDocumentDal.get_user_documents(db, user_id)
+        uploaded_doc_type_ids = {getattr(doc, 'document_type_id', 0) for doc in user_documents}
+        
+        # Find missing mandatory documents
+        missing_mandatory_documents = []
+        for doc_type in mandatory_doc_types:
+            try:
+                doc_id = getattr(doc_type, 'id', 0)
+                if doc_id not in uploaded_doc_type_ids:
+                    # Safe attribute access with fallbacks
+                    missing_doc = {
+                        "documentTypeId": doc_id,
+                        "documentTypeName": getattr(doc_type, 'name', ''),
+                        "documentTypeNameEnglish": getattr(doc_type, 'name_english', ''),
+                        "isMandatory": getattr(doc_type, 'is_mandatory', True),
+                        "category": getattr(doc_type, 'category', 'other'),
+                        "instructions": getattr(doc_type, 'instructions', 'Please upload this document')
+                    }
+                    
+                    print(f"📋 Missing: {missing_doc['documentTypeNameEnglish']} (category: {missing_doc['category']})")
+                    missing_mandatory_documents.append(missing_doc)
+            except Exception as e:
+                print(f"⚠️  Error processing doc type: {e}")
+                continue
+        
+        # Check pending verifications
+        pending_document_verification = []
+        for doc in user_documents:
+            try:
+                verification_status = getattr(doc, 'verification_status', 'PENDING')
+                if verification_status == 'PENDING':
+                    pending_doc = {
+                        "documentId": getattr(doc, 'id', 0),
+                        "documentTypeId": getattr(doc, 'document_type_id', 0),
+                        "documentTypeName": getattr(doc, 'document_type', ''),
+                        "documentTypeNameEnglish": getattr(doc, 'document_type_english', ''),
+                        "filePath": getattr(doc, 'file_path', ''),
+                        "verificationStatus": verification_status,
+                        "uploadedAt": doc.created_at.isoformat() if hasattr(doc, 'created_at') and doc.created_at else ''
+                    }
+                    pending_document_verification.append(pending_doc)
+            except Exception as e:
+                print(f"⚠️  Error processing pending doc: {e}")
+                continue
+        
+        # Calculate completion percentage
+        total_basic_fields = len(required_basic_fields)
+        total_mandatory_docs = len(mandatory_doc_types)
+        total_requirements = total_basic_fields + total_mandatory_docs
+        
+        completed_basic_fields = total_basic_fields - len(missing_basic_fields)
+        completed_mandatory_docs = total_mandatory_docs - len(missing_mandatory_documents)
+        completed_requirements = completed_basic_fields + completed_mandatory_docs
+        
+        completion_percentage = (completed_requirements / total_requirements * 100) if total_requirements > 0 else 100
+        
+        # Generate next steps
+        next_steps = []
+        if missing_basic_fields:
+            next_steps.append("Complete missing basic profile information")
+        if missing_mandatory_documents:
+            next_steps.append(f"Upload {len(missing_mandatory_documents)} mandatory documents")
+        if pending_document_verification:
+            next_steps.append("Wait for document verification by admin")
+        
+        is_complete = len(missing_basic_fields) == 0 and len(missing_mandatory_documents) == 0
+        
+        print(f"✅ Validation complete: {completion_percentage:.1f}% ({len(missing_mandatory_documents)} missing docs)")
+        
+        # Return with safe attribute access
+        return {
+            "isComplete": is_complete,
+            "missingBasicFields": missing_basic_fields,
+            "missingMandatoryDocuments": missing_mandatory_documents,
+            "pendingDocumentVerification": pending_document_verification,
+            "completionPercentage": round(completion_percentage, 2),
+            "nextSteps": next_steps
         }
     
     @staticmethod
@@ -224,9 +351,10 @@ class ProfileService:
         # Update user's document upload status
         UserDal.set_documents_uploaded_to_true(db, user_id)
         
+        doc_name = getattr(doc_type, 'name', 'Document')
         return {
-            "message": f"{doc_type.name} uploaded successfully",
-            "document_id": user_doc.id,
+            "message": f"{doc_name} uploaded successfully",
+            "document_id": getattr(user_doc, 'id', 0),
             "file_path": file_path
         }
     
@@ -245,10 +373,6 @@ class ProfileService:
             try:
                 doc_type_id = int(doc_type_id_str)
                 
-                # Handle file data (this could be base64 or file object depending on implementation)
-                # For now, assuming it's handled similarly to single upload
-                # You may need to adapt this based on how your React component sends the data
-                
                 # Validate document type exists
                 doc_type = DocumentTypeDal.get_document_type_by_id(db, doc_type_id)
                 if not doc_type:
@@ -259,7 +383,6 @@ class ProfileService:
                     continue
                 
                 # Process the upload (implementation depends on your file handling)
-                # This is a placeholder - adapt based on your actual file handling
                 file_path = f"user_docs/user_{user_id}/doc_type_{doc_type_id}/file_{uuid.uuid4().hex}"
                 
                 user_doc = UserDocumentDal.create_user_document(
@@ -271,8 +394,8 @@ class ProfileService:
                 
                 uploaded_docs.append({
                     "document_type_id": doc_type_id,
-                    "document_type_name": doc_type.name,
-                    "document_id": user_doc.id,
+                    "document_type_name": getattr(doc_type, 'name', ''),
+                    "document_id": getattr(user_doc, 'id', 0),
                     "file_path": file_path
                 })
                 
@@ -301,13 +424,13 @@ class ProfileService:
         
         return [
             {
-                "documentId": doc.id,
-                "documentTypeId": doc.document_type_id,
-                "documentTypeName": doc.document_type,
-                "documentTypeNameEnglish": doc.document_type_english,
-                "filePath": doc.file_path,
-                "verificationStatus": doc.verification_status,
-                "uploadedAt": doc.created_at.isoformat(),
+                "documentId": getattr(doc, 'id', 0),
+                "documentTypeId": getattr(doc, 'document_type_id', 0),
+                "documentTypeName": getattr(doc, 'document_type', ''),
+                "documentTypeNameEnglish": getattr(doc, 'document_type_english', ''),
+                "filePath": getattr(doc, 'file_path', ''),
+                "verificationStatus": getattr(doc, 'verification_status', 'PENDING'),
+                "uploadedAt": doc.created_at.isoformat() if hasattr(doc, 'created_at') and doc.created_at else '',
                 "adminComments": getattr(doc, 'admin_comments', None)
             } for doc in documents
         ]
@@ -321,147 +444,122 @@ class ProfileService:
             "message": "Document deleted successfully",
             "document_id": document_id
         }
-  # Also replace your ProfileService.get_document_types method with this:
-
-@staticmethod
-def get_document_types(
-    db: Session, 
-    category: Optional[str] = None,
-    is_mandatory: Optional[bool] = None
-) -> List[Dict[str, Any]]:
-    """FIXED: Get available document types - works with DTOs"""
     
-    print(f"🔍 Getting document types (category: {category}, mandatory: {is_mandatory})")
-    doc_types = DocumentTypeDal.get_all_document_types(db)  # Returns List[DocumentTypeDTO]
-    
-    # Filter by category if provided - direct attribute access on DTOs
-    if category:
-        doc_types = [dt for dt in doc_types if dt.category == category.lower()]
-        print(f"📊 Filtered to {len(doc_types)} documents for category '{category}'")
-    
-    # Filter by mandatory status if provided - direct attribute access on DTOs
-    if is_mandatory is not None:
-        doc_types = [dt for dt in doc_types if dt.is_mandatory == is_mandatory]
-        print(f"📊 Filtered to {len(doc_types)} documents for mandatory={is_mandatory}")
-    
-    # Convert DTOs to API response format
-    result = []
-    for dt in doc_types:
-        # Direct attribute access on DTO objects - no getattr needed!
-        formats_list = dt.allowed_formats.split(',') if isinstance(dt.allowed_formats, str) else dt.allowed_formats
+    @staticmethod
+    def get_document_types(
+        db: Session, 
+        category: Optional[str] = None,
+        is_mandatory: Optional[bool] = None
+    ) -> List[Dict[str, Any]]:
+        """Get available document types, optionally filtered by category"""
         
-        doc_dict = {
-            "documentTypeId": dt.id,
-            "documentTypeName": dt.name,
-            "documentTypeNameEnglish": dt.name_english,
-            "category": dt.category,  # Direct access - should not be null!
-            "isMandatory": dt.is_mandatory,
-            "instructions": dt.instructions,  # Direct access - should not be null!
-            "maxFileSizeMb": dt.max_file_size_mb,
-            "allowedFormats": formats_list,
-            "fieldDefinitions": dt.field_definitions
-        }
+        doc_types = DocumentTypeDal.get_all_document_types(db)
         
-        # Debug first document to verify structure
-        if len(result) == 0:
-            print(f"📄 First document sample:")
-            print(f"   Name: {dt.name_english}")
-            print(f"   Category: '{dt.category}' (should not be null)")
-            print(f"   Instructions: '{dt.instructions}' (should not be null)")
+        # Filter by category if provided
+        if category:
+            doc_types = [dt for dt in doc_types if getattr(dt, 'category', 'other') == category]
         
-        result.append(doc_dict)
-    
-    print(f"✅ Returning {len(result)} document types")
-    return result
-
-# Also update get_documents_by_category method:
-@staticmethod
-def get_documents_by_category(db: Session, user_id: int) -> List[Dict[str, Any]]:
-    """FIXED: Get documents organized by category - works with DTOs"""
-    
-    print(f"🔍 Getting documents by category for user {user_id}")
-    
-    # Get all document types and user's uploaded documents
-    all_doc_types = DocumentTypeDal.get_all_document_types(db)  # List[DocumentTypeDTO]
-    user_documents = UserDocumentDal.get_user_documents(db, user_id)  # List[UserDocumentDTO]
-    
-    # Group documents by category
-    documents_by_category = []
-    
-    for category in DocumentCategory:
-        category_config = DOCUMENT_CATEGORIES_CONFIG.get(category, {})
+        # Filter by mandatory status if provided
+        if is_mandatory is not None:
+            doc_types = [dt for dt in doc_types if getattr(dt, 'is_mandatory', False) == is_mandatory]
         
-        # Get document types for this category - direct attribute access on DTOs
-        category_doc_types = [
-            dt for dt in all_doc_types 
-            if dt.category == category.value  # Direct access instead of getattr
+        return [
+            {
+                "documentTypeId": getattr(dt, 'id', 0),
+                "documentTypeName": getattr(dt, 'name', ''),
+                "documentTypeNameEnglish": getattr(dt, 'name_english', ''),
+                "category": getattr(dt, 'category', 'other'),
+                "isMandatory": getattr(dt, 'is_mandatory', False),
+                "instructions": getattr(dt, 'instructions', 'Please upload this document'),
+                "field_definitions": getattr(dt, 'field_definitions', []),
+                "maxFileSizeMb": getattr(dt, 'max_file_size_mb', 5),
+                "allowedFormats": getattr(dt, 'allowed_formats', 'pdf,jpg,jpeg,png,doc,docx').split(',') if isinstance(getattr(dt, 'allowed_formats', ''), str) else ["pdf", "jpg", "jpeg", "png", "doc", "docx"]
+            } for dt in doc_types
         ]
-        
-        # Get uploaded documents for this category
-        uploaded_docs = []
-        for doc in user_documents:
-            # Check if this document belongs to this category
-            for dt in category_doc_types:
-                if dt.id == doc.document_type_id:
-                    uploaded_docs.append({
-                        "documentId": doc.id,
-                        "documentTypeId": doc.document_type_id,
-                        "documentTypeName": doc.document_type,
-                        "documentTypeNameEnglish": doc.document_type_english,
-                        "category": category.value,
-                        "filePath": doc.file_path,
-                        "verificationStatus": doc.verification_status,
-                        "uploadedAt": doc.created_at.isoformat() if doc.created_at else '',
-                        "adminComments": doc.admin_comments
-                    })
-                    break
-        
-        # Calculate completion status - direct attribute access on DTOs
-        mandatory_types_count = len([dt for dt in category_doc_types if dt.is_mandatory])
-        uploaded_mandatory_count = 0
-        
-        for doc in uploaded_docs:
-            for dt in category_doc_types:
-                if dt.id == doc["documentTypeId"] and dt.is_mandatory:
-                    uploaded_mandatory_count += 1
-                    break
-        
-        completion_status = {
-            "totalTypes": len(category_doc_types),
-            "mandatoryTypes": mandatory_types_count,
-            "uploadedCount": len(uploaded_docs),
-            "uploadedMandatoryCount": uploaded_mandatory_count,
-            "isComplete": uploaded_mandatory_count >= mandatory_types_count,
-            "completionPercentage": (uploaded_mandatory_count / mandatory_types_count * 100) if mandatory_types_count > 0 else 100
-        }
-        
-        # Only include categories that have document types
-        if category_doc_types:
-            documents_by_category.append({
-                "category": category.value,
-                "categoryName": category_config.get("name", category.value),
-                "categoryNameEnglish": category_config.get("name_english", category.value),
-                "description": category_config.get("description"),
-                "documentTypes": [
-                    {
-                        "documentTypeId": dt.id,
-                        "documentTypeName": dt.name,
-                        "documentTypeNameEnglish": dt.name_english,
-                        "category": category.value,
-                        "isMandatory": dt.is_mandatory,
-                        "instructions": dt.instructions,  # Direct access
-                        "maxFileSizeMb": dt.max_file_size_mb,
-                        "allowedFormats": dt.allowed_formats.split(',') if isinstance(dt.allowed_formats, str) else dt.allowed_formats,
-                        "fieldDefinitions": dt.field_definitions
-                    } for dt in category_doc_types
-                ],
-                "uploadedDocuments": uploaded_docs,
-                "completionStatus": completion_status
-            })
     
-    print(f"✅ Returning {len(documents_by_category)} categories")
-    return documents_by_category
-  
+    @staticmethod
+    def get_documents_by_category(db: Session, user_id: int) -> List[Dict[str, Any]]:
+        """Get documents organized by category with completion status"""
+        
+        # Get all document types and user's uploaded documents
+        all_doc_types = DocumentTypeDal.get_all_document_types(db)
+        user_documents = UserDocumentDal.get_user_documents(db, user_id)
+        
+        # Group documents by category
+        documents_by_category = []
+        
+        for category in DocumentCategory:
+            category_config = DOCUMENT_CATEGORIES_CONFIG.get(category, {})
+            
+            # Get document types for this category
+            category_doc_types = [
+                dt for dt in all_doc_types 
+                if getattr(dt, 'category', 'other') == category.value
+            ]
+            
+            # Get uploaded documents for this category
+            uploaded_docs = []
+            for doc in user_documents:
+                # Check if this document belongs to this category
+                for dt in category_doc_types:
+                    if getattr(dt, 'id', 0) == getattr(doc, 'document_type_id', 0):
+                        uploaded_docs.append({
+                            "documentId": getattr(doc, 'id', 0),
+                            "documentTypeId": getattr(doc, 'document_type_id', 0),
+                            "documentTypeName": getattr(doc, 'document_type', ''),
+                            "documentTypeNameEnglish": getattr(doc, 'document_type_english', ''),
+                            "category": category.value,                         
+                            "filePath": getattr(doc, 'file_path', ''),
+                            "verificationStatus": getattr(doc, 'verification_status', 'PENDING'),
+                            "uploadedAt": doc.created_at.isoformat() if hasattr(doc, 'created_at') and doc.created_at else '',
+                            "adminComments": getattr(doc, 'admin_comments', None)
+                        })
+                        break
+            
+            # Calculate completion status
+            mandatory_types_count = len([dt for dt in category_doc_types if getattr(dt, 'is_mandatory', False)])
+            uploaded_mandatory_count = 0
+            
+            for doc in uploaded_docs:
+                for dt in category_doc_types:
+                    if getattr(dt, 'id', 0) == doc["documentTypeId"] and getattr(dt, 'is_mandatory', False):
+                        uploaded_mandatory_count += 1
+                        break
+            
+            completion_status = {
+                "totalTypes": len(category_doc_types),
+                "mandatoryTypes": mandatory_types_count,
+                "uploadedCount": len(uploaded_docs),
+                "uploadedMandatoryCount": uploaded_mandatory_count,
+                "isComplete": uploaded_mandatory_count >= mandatory_types_count,
+                "completionPercentage": (uploaded_mandatory_count / mandatory_types_count * 100) if mandatory_types_count > 0 else 100
+            }
+            
+            # Only include categories that have document types
+            if category_doc_types:
+                documents_by_category.append({
+                    "category": category.value,
+                    "categoryName": category_config.get("name", category.value),
+                    "categoryNameEnglish": category_config.get("name_english", category.value),
+                    "description": category_config.get("description"),
+                    "documentTypes": [
+                        {
+                            "documentTypeId": getattr(dt, 'id', 0),
+                            "documentTypeName": getattr(dt, 'name', ''),
+                            "documentTypeNameEnglish": getattr(dt, 'name_english', ''),
+                            "category": category.value,
+                            "isMandatory": getattr(dt, 'is_mandatory', False),
+                            "instructions": getattr(dt, 'instructions', 'Please upload this document'),
+                            "maxFileSizeMb": getattr(dt, 'max_file_size_mb', 5),
+                            "allowedFormats": getattr(dt, 'allowed_formats', 'pdf,jpg,jpeg,png,doc,docx').split(',') if isinstance(getattr(dt, 'allowed_formats', ''), str) else ["pdf", "jpg", "jpeg", "png", "doc", "docx"]
+                        } for dt in category_doc_types
+                    ],
+                    "uploadedDocuments": uploaded_docs,
+                    "completionStatus": completion_status
+                })
+        
+        return documents_by_category
+    
     @staticmethod
     def get_document_categories() -> List[Dict[str, Any]]:
         """Get all document categories with their configuration"""
@@ -479,116 +577,6 @@ def get_documents_by_category(db: Session, user_id: int) -> List[Dict[str, Any]]
         
         return categories
     
-    # Replace your ProfileService.validate_profile_completeness method with this:
-
-@staticmethod
-def validate_profile_completeness(db: Session, user_id: int) -> Dict[str, Any]:
-    """FIXED: Validate if user's profile is complete - works with DTOs"""
-    
-    user = UserDal.get_user_by_id(db, user_id)
-    if not user:
-        raise NotFoundException(f"User with ID {user_id} not found")
-    
-    # Check basic fields
-    missing_basic_fields = []
-    required_basic_fields = {
-        'first_name': 'firstName',
-        'last_name': 'lastName', 
-        'mobile_number': 'mobileNumber',
-        'email': 'email',
-        'district_id': 'districtId',
-        'block_id': 'blockId',
-        'gram_panchayat_id': 'gramPanchayatId'
-    }
-    
-    for field, camel_field in required_basic_fields.items():
-        if not getattr(user, field, None):
-            missing_basic_fields.append(camel_field)
-    
-    # Get ALL document types with proper DTO handling
-    print("🔍 Fetching document types for validation...")
-    all_doc_types = DocumentTypeDal.get_all_document_types(db)  # Returns List[DocumentTypeDTO]
-    
-    # Debug: Print first few document types to verify DTO structure
-    for i, dt in enumerate(all_doc_types[:3]):
-        print(f"📄 DTO {i+1}: {dt.name_english}")
-        print(f"   Category: '{dt.category}' (type: {type(dt.category)})")
-        print(f"   Instructions: '{dt.instructions}' (type: {type(dt.instructions)})")
-        print(f"   Is Mandatory: {dt.is_mandatory} (type: {type(dt.is_mandatory)})")
-    
-    # Filter mandatory document types - direct attribute access on DTOs
-    mandatory_doc_types = [dt for dt in all_doc_types if dt.is_mandatory]
-    print(f"📊 Found {len(mandatory_doc_types)} mandatory document types")
-    
-    # Get user's uploaded documents  
-    user_documents = UserDocumentDal.get_user_documents(db, user_id)  # Returns List[UserDocumentDTO]
-    uploaded_doc_type_ids = {doc.document_type_id for doc in user_documents}
-    
-    # Find missing mandatory documents
-    missing_mandatory_documents = []
-    for doc_type in mandatory_doc_types:
-        if doc_type.id not in uploaded_doc_type_ids:
-            # Direct attribute access on DTO objects (no getattr needed!)
-            missing_doc = {
-                "documentTypeId": doc_type.id,
-                "documentTypeName": doc_type.name,
-                "documentTypeNameEnglish": doc_type.name_english,
-                "isMandatory": doc_type.is_mandatory,
-                "category": doc_type.category,  # Direct access - should not be null now!
-                "instructions": doc_type.instructions  # Direct access - should not be null now!
-            }
-            
-            print(f"📋 Missing: {doc_type.name_english} (category: {doc_type.category})")
-            missing_mandatory_documents.append(missing_doc)
-    
-    # Check pending verifications - direct attribute access on DTO objects
-    pending_document_verification = []
-    for doc in user_documents:
-        if doc.verification_status == 'PENDING':
-            pending_document_verification.append({
-                "documentId": doc.id,
-                "documentTypeId": doc.document_type_id,
-                "documentTypeName": doc.document_type,
-                "documentTypeNameEnglish": doc.document_type_english,
-                "filePath": doc.file_path,
-                "verificationStatus": doc.verification_status,
-                "uploadedAt": doc.created_at.isoformat() if doc.created_at else ''
-            })
-    
-    # Calculate completion percentage
-    total_basic_fields = len(required_basic_fields)
-    total_mandatory_docs = len(mandatory_doc_types)
-    total_requirements = total_basic_fields + total_mandatory_docs
-    
-    completed_basic_fields = total_basic_fields - len(missing_basic_fields)
-    completed_mandatory_docs = total_mandatory_docs - len(missing_mandatory_documents)
-    completed_requirements = completed_basic_fields + completed_mandatory_docs
-    
-    completion_percentage = (completed_requirements / total_requirements * 100) if total_requirements > 0 else 100
-    
-    # Generate next steps
-    next_steps = []
-    if missing_basic_fields:
-        next_steps.append("Complete missing basic profile information")
-    if missing_mandatory_documents:
-        next_steps.append(f"Upload {len(missing_mandatory_documents)} mandatory documents")
-    if pending_document_verification:
-        next_steps.append("Wait for document verification by admin")
-    
-    is_complete = len(missing_basic_fields) == 0 and len(missing_mandatory_documents) == 0
-    
-    print(f"✅ Validation complete: {completion_percentage:.1f}% ({len(missing_mandatory_documents)} missing docs)")
-    
-    # Return with proper category and instructions from DTOs
-    return {
-        "isComplete": is_complete,
-        "missingBasicFields": missing_basic_fields,
-        "missingMandatoryDocuments": missing_mandatory_documents,
-        "pendingDocumentVerification": pending_document_verification,
-        "completionPercentage": round(completion_percentage, 2),
-        "nextSteps": next_steps
-    }
-
     @staticmethod
     async def _save_file_to_s3(file: UploadFile, user_id: int, document_type_id: int) -> str:
         """Save uploaded file to S3 and return the S3 key"""
@@ -606,12 +594,16 @@ def validate_profile_completeness(db: Session, user_id: int) -> Dict[str, Any]:
             file_content = await file.read()
             
             # Upload to S3
-            s3_client.put_object(
-                Bucket=bucket_name,
-                Key=s3_key,
-                Body=file_content,
-                ContentType=file.content_type
-            )
+            if s3_client:
+                s3_client.put_object(
+                    Bucket=bucket_name,
+                    Key=s3_key,
+                    Body=file_content,
+                    ContentType=file.content_type
+                )
+            else:
+                # Fallback for when S3 is not available
+                print(f"S3 not available, would save file to: {s3_key}")
             
             return s3_key
             
