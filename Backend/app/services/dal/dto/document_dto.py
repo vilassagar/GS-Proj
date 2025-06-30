@@ -48,6 +48,9 @@ class UserDocumentDTO(ToCamel):
             id: int,
             document_type: str,
             document_type_english: Optional[str],
+            category: Optional[str] ,
+            intruction: Optional[str],
+            field_definitions: Optional[str],
             user_id: int,
             document_type_id: int,
             file_path: str,
@@ -62,6 +65,9 @@ class UserDocumentDTO(ToCamel):
         self.user_id = user_id
         self.document_type_id = document_type_id
         self.document_type = document_type
+        self.category = category
+        self.intruction = intruction
+        self.field_definitions = field_definitions
         self.document_type_english = document_type_english
         self.file_path = file_path
         self.verification_status = verification_status
@@ -77,6 +83,9 @@ class UserDocumentDTO(ToCamel):
             id=user_doc.id,
             document_type=user_doc.document_type.name,
             document_type_english=getattr(user_doc.document_type, 'name_english', None),
+            category=getattr(user_doc.document_type, 'category', None),
+            intruction=getattr(user_doc.document_type, 'intruction', None),
+            field_definitions=getattr(user_doc.document_type, 'field_definitions', None),
             user_id=user_doc.user_id,
             document_type_id=user_doc.document_type_id,
             file_path=user_doc.file_path,

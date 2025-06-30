@@ -5,6 +5,8 @@ from typing import List, Optional, Dict, Any
 import os
 import uuid
 from datetime import datetime
+# Your existing imports should work, but make sure you have:
+from app.services.dal.document_dal import DocumentTypeDal
 
 try:
     import boto3
@@ -20,8 +22,11 @@ from app.core.core_exceptions import NotFoundException, InvalidRequestException
 from app.schemas.profile_schema import (
     ProfileBasicDetailsUpdate,
     ProfileResponse, 
-    ProfileValidationResponse
+    ProfileValidationResponse,
+    DocumentsByCategoryResponse,
+    DocumentTypeResponse
 )
+from app.schemas.document_schema import DocumentCategory, DOCUMENT_CATEGORIES_CONFIG
 
 # Import DAL classes
 try:
@@ -323,7 +328,7 @@ class ProfileService:
         category: Optional[str] = None,
         is_mandatory: Optional[bool] = None
     ) -> List[Dict[str, Any]]:
-        """Get available document types"""
+        """Get available document types, optionally filtered by category"""
         
         doc_types = DocumentTypeDal.get_all_document_types(db)
         
@@ -340,11 +345,108 @@ class ProfileService:
                 "documentTypeId": dt.id,
                 "documentTypeName": dt.name,
                 "documentTypeNameEnglish": dt.name_english,
+                "category": getattr(dt, 'category', 'other'),
                 "isMandatory": dt.is_mandatory,
-                "category": getattr(dt, 'category', None),
-                "instructions": getattr(dt, 'instructions', None)
+                "instructions": getattr(dt, 'instructions', None),
+                "maxFileSizeMb": getattr(dt, 'max_file_size_mb', 5),
+                "allowedFormats": getattr(dt, 'allowed_formats', ["pdf", "jpg", "jpeg", "png", "doc", "docx"])
             } for dt in doc_types
         ]
+    
+    @staticmethod
+    def get_documents_by_category(db: Session, user_id: int) -> List[Dict[str, Any]]:
+        """Get documents organized by category with completion status"""
+        
+        # Get all document types and user's uploaded documents
+        all_doc_types = DocumentTypeDal.get_all_document_types(db)
+        user_documents = UserDocumentDal.get_user_documents(db, user_id)
+        
+        # Group documents by category
+        documents_by_category = []
+        
+        for category in DocumentCategory:
+            category_config = DOCUMENT_CATEGORIES_CONFIG.get(category, {})
+            
+            # Get document types for this category
+            category_doc_types = [
+                dt for dt in all_doc_types 
+                if getattr(dt, 'category', 'other') == category.value
+            ]
+            
+            # Get uploaded documents for this category
+            uploaded_docs = [
+                {
+                    "documentId": doc.id,
+                    "documentTypeId": doc.document_type_id,
+                    "documentTypeName": doc.document_type,
+                    "documentTypeNameEnglish": doc.document_type_english,
+                    "category": category.value,
+                    "filePath": doc.file_path,
+                    "verificationStatus": doc.verification_status,
+                    "uploadedAt": doc.created_at.isoformat(),
+                    "adminComments": getattr(doc, 'admin_comments', None)
+                }
+                for doc in user_documents
+                if any(dt.id == doc.document_type_id for dt in category_doc_types)
+            ]
+            
+            # Calculate completion status
+            mandatory_types_count = len([dt for dt in category_doc_types if dt.is_mandatory])
+            uploaded_mandatory_count = len([
+                doc for doc in uploaded_docs
+                if any(dt.id == doc["documentTypeId"] and dt.is_mandatory for dt in category_doc_types)
+            ])
+            
+            completion_status = {
+                "totalTypes": len(category_doc_types),
+                "mandatoryTypes": mandatory_types_count,
+                "uploadedCount": len(uploaded_docs),
+                "uploadedMandatoryCount": uploaded_mandatory_count,
+                "isComplete": uploaded_mandatory_count >= mandatory_types_count,
+                "completionPercentage": (uploaded_mandatory_count / mandatory_types_count * 100) if mandatory_types_count > 0 else 100
+            }
+            
+            # Only include categories that have document types
+            if category_doc_types:
+                documents_by_category.append({
+                    "category": category.value,
+                    "categoryName": category_config.get("name", category.value),
+                    "categoryNameEnglish": category_config.get("name_english", category.value),
+                    "description": category_config.get("description"),
+                    "documentTypes": [
+                        {
+                            "documentTypeId": dt.id,
+                            "documentTypeName": dt.name,
+                            "documentTypeNameEnglish": dt.name_english,
+                            "category": category.value,
+                            "isMandatory": dt.is_mandatory,
+                            "instructions": getattr(dt, 'instructions', None),
+                            "maxFileSizeMb": getattr(dt, 'max_file_size_mb', 5),
+                            "allowedFormats": getattr(dt, 'allowed_formats', ["pdf", "jpg", "jpeg", "png", "doc", "docx"])
+                        } for dt in category_doc_types
+                    ],
+                    "uploadedDocuments": uploaded_docs,
+                    "completionStatus": completion_status
+                })
+        
+        return documents_by_category
+    
+    @staticmethod
+    def get_document_categories() -> List[Dict[str, Any]]:
+        """Get all document categories with their configuration"""
+        
+        categories = []
+        for category, config in DOCUMENT_CATEGORIES_CONFIG.items():
+            categories.append({
+                "category": category.value,
+                "categoryName": config.get("name", category.value),
+                "categoryNameEnglish": config.get("name_english", category.value),
+                "description": config.get("description"),
+                "documentTypesCount": len(config.get("types", [])),
+                "mandatoryTypesCount": len([dt for dt in config.get("types", []) if dt.get("is_mandatory", False)])
+            })
+        
+        return categories
     
     @staticmethod
     def validate_profile_completeness(db: Session, user_id: int) -> Dict[str, Any]:

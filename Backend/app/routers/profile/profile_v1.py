@@ -1,5 +1,5 @@
 # app/routers/profile/profile_v1.py
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 import json
@@ -11,14 +11,13 @@ from app.utils.vx_api_perms_utils import VxAPIPermsUtils, VxAPIPermsEnum
 from app.schemas.profile_schema import (
     ProfileBasicDetailsUpdate,
     ProfileResponse, 
-    ProfileValidationResponse
-)
-from app.schemas.profile_schema import (
-    ProfileBasicDetailsUpdate,
-    ProfileResponse, 
     ProfileValidationResponse,
-    ProfileDocumentResponse  # Add this missing import
+    ProfileDocumentResponse,
+    DocumentsByCategoryResponse,
+    DocumentTypeResponse
 )
+from app.schemas.document_schema import DocumentCategory
+
 # Try importing the service and DALs
 try:
     from app.services.profile_service import ProfileService
@@ -31,9 +30,6 @@ try:
 except ImportError as e:
     print(f"Could not import UserDal: {e}")
     UserDal = None
-
-
-#end of imports
 
 router = APIRouter(
     prefix="/v1/profile",
@@ -157,41 +153,25 @@ async def upload_document(
         db, current_user.user_id, document_type_id, file, extra_data
     )
 
-# Upload multiple documents (matching your React component)
-VxAPIPermsUtils.set_perm_post(path=router.prefix + '/documents/upload-multiple', perm=VxAPIPermsEnum.AUTHENTICATED)
-@router.post("/documents/upload-multiple")
-async def upload_multiple_documents(
-    files_data: str = Form(..., description="JSON mapping document_type_id to file data"),
-    current_user: UserDTO = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Upload multiple documents at once
-    files_data should be JSON like: {"1": "file1_data", "2": "file2_data"}
-    """
-    try:
-        # Parse the files mapping
-        files_mapping = json.loads(files_data)
-        
-        return await ProfileService.upload_multiple_documents(
-            db, current_user.user_id, files_mapping
-        )
-        
-    except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid JSON in files_data"
-        )
-
 # Get user's uploaded documents
 VxAPIPermsUtils.set_perm_get(path=router.prefix + '/documents', perm=VxAPIPermsEnum.AUTHENTICATED)
-@router.get("/documents", response_model=List[ProfileDocumentResponse])
+@router.get("/documents")
 async def get_my_documents(
     current_user: UserDTO = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get current user's uploaded documents"""
     return ProfileService.get_user_documents(db, current_user.user_id)
+
+# Get documents organized by category (NEW)
+VxAPIPermsUtils.set_perm_get(path=router.prefix + '/documents/by-category', perm=VxAPIPermsEnum.AUTHENTICATED)
+@router.get("/documents/by-category")
+async def get_documents_by_category(
+    current_user: UserDTO = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get current user's documents organized by category with completion status"""
+    return ProfileService.get_documents_by_category(db, current_user.user_id)
 
 # Delete a document
 VxAPIPermsUtils.set_perm_delete(path=router.prefix + '/documents/{document_id}', perm=VxAPIPermsEnum.AUTHENTICATED)
@@ -204,16 +184,33 @@ async def delete_document(
     """Delete a specific document"""
     return ProfileService.delete_document(db, current_user.user_id, document_id)
 
-# Get document master list (for dropdowns)
+# Get document master list with category support
 VxAPIPermsUtils.set_perm_get(path=router.prefix + '/document-types', perm=VxAPIPermsEnum.PUBLIC)
 @router.get("/document-types")
 async def get_document_types(
-    category: Optional[str] = None,
-    is_mandatory: Optional[bool] = None,
+    category: Optional[str] = Query(None, description="Filter by document category"),
+    is_mandatory: Optional[bool] = Query(None, description="Filter by mandatory status"),
     db: Session = Depends(get_db)
 ):
-    """Get available document types"""
+    """Get available document types, optionally filtered by category"""
     return ProfileService.get_document_types(db, category, is_mandatory)
+
+# Get document categories (NEW)
+VxAPIPermsUtils.set_perm_get(path=router.prefix + '/document-categories', perm=VxAPIPermsEnum.PUBLIC)
+@router.get("/document-categories")
+async def get_document_categories():
+    """Get all document categories with their configuration"""
+    return ProfileService.get_document_categories()
+
+# Get document types for a specific category (NEW)
+VxAPIPermsUtils.set_perm_get(path=router.prefix + '/document-categories/{category}/types', perm=VxAPIPermsEnum.PUBLIC)
+@router.get("/document-categories/{category}/types")
+async def get_document_types_by_category(
+    category: DocumentCategory,
+    db: Session = Depends(get_db)
+):
+    """Get document types for a specific category"""
+    return ProfileService.get_document_types(db, category=category.value)
 
 # Validate profile completeness
 VxAPIPermsUtils.set_perm_get(path=router.prefix + '/validation', perm=VxAPIPermsEnum.AUTHENTICATED)

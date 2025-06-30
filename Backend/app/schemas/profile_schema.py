@@ -1,41 +1,8 @@
 # app/schemas/profile_schema.py
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, EmailStr, validator, Field
 from datetime import datetime
-
-from app.schemas.base import CamelModel
-
-
-class ProfileBasicDetailsResponse(CamelModel):
-    """Schema for returning basic profile details"""
-    user_id: int
-    first_name: str
-    last_name: str
-    designation: Optional[str] = None
-    district: Optional[Dict[str, Any]] = None
-    block: Optional[Dict[str, Any]] = None
-    gram_panchayat: Optional[Dict[str, Any]] = None
-    mobile_number: str
-    whatsapp_number: str
-    email: str
-    status: str
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-
-class ProfileDocumentUpload(CamelModel):
-    """Schema for document upload request"""
-    document_type_id: int
-    additional_data: Optional[Dict[str, Any]] = {}
-
-
-class DocumentTypeResponse(CamelModel):
-    """Schema for document type information"""
-    document_type_id: int
-    document_type_name: str
-    document_type_name_english: Optional[str] = None
-    is_mandatory: bool
-    category: Optional[str] = None
-    instructions: Optional[str] = None
+from .document_schema import DocumentCategory, DocumentType, DocumentCategoryResponse
 
 class ProfileBasicDetailsUpdate(BaseModel):
     first_name: Optional[str] = Field(None, max_length=100)
@@ -55,10 +22,38 @@ class ProfileDocumentResponse(BaseModel):
     document_type_id: int = Field(..., alias="documentTypeId")
     document_type_name: str = Field(..., alias="documentTypeName")
     document_type_name_english: str = Field(..., alias="documentTypeNameEnglish")
+    category: DocumentCategory = None
     file_path: str = Field(..., alias="filePath")
     verification_status: str = Field(..., alias="verificationStatus")
     uploaded_at: str = Field(..., alias="uploadedAt")
     admin_comments: Optional[str] = Field(None, alias="adminComments")
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
+class DocumentTypeResponse(BaseModel):
+    document_type_id: int = Field(..., alias="documentTypeId")
+    document_type_name: str = Field(..., alias="documentTypeName")
+    document_type_name_english: str = Field(..., alias="documentTypeNameEnglish")
+    category: DocumentCategory = None
+    is_mandatory: bool = Field(..., alias="isMandatory")
+    instructions: Optional[str] = None
+    max_file_size_mb: int = Field(5, alias="maxFileSizeMb")
+    allowed_formats: List[str] = Field(..., alias="allowedFormats")
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
+class DocumentsByCategoryResponse(BaseModel):
+    category: DocumentCategory
+    category_name: str = Field(..., alias="categoryName")
+    category_name_english: str = Field(..., alias="categoryNameEnglish")
+    description: Optional[str] = None
+    document_types: List[DocumentTypeResponse] = Field(..., alias="documentTypes")
+    uploaded_documents: List[ProfileDocumentResponse] = Field(..., alias="uploadedDocuments")
+    completion_status: Dict[str, Any] = Field(..., alias="completionStatus")
 
     class Config:
         from_attributes = True
@@ -75,7 +70,7 @@ class ProfileBasicDetails(BaseModel):
     mobile_number: Optional[str] = Field(None, alias="mobileNumber")
     whatsapp_number: Optional[str] = Field(None, alias="whatsappNumber")
     email: Optional[str] = None
-    status: Optional[str] = None
+    status: str = None
     created_at: str = Field(..., alias="createdAt")
     updated_at: Optional[str] = Field(None, alias="updatedAt")
 
@@ -107,7 +102,7 @@ class ProfileValidationResponse(BaseModel):
 class ProfileResponse(BaseModel):
     basic_details: ProfileBasicDetails = Field(..., alias="basicDetails")
     documents: Optional[List[ProfileDocumentResponse]] = None
-    validation: Optional[ProfileValidationResponse] = None
+    validation: Optional[ProfileValidationResponse]= None
     permissions: Optional[ProfilePermissions] = None
 
     class Config:
