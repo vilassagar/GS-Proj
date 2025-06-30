@@ -1,3 +1,4 @@
+# app/core/app_configs.py - Updated to include profile router
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
@@ -11,12 +12,16 @@ from app.routers.districts import districts_v1
 from app.routers.gram_sevaks import gram_sevaks_v1
 from app.routers.preset import preset_v1
 from app.routers.users import users_v1
+from app.routers.profile import profile_v1  # New profile router
 from app.core.api_checks_mw import ApiChecksMW
 from app.core.core_exceptions import UnauthorizedException, InvalidRequestException, \
     NotFoundException, ConflictException, NotAcceptable
 from app.routers.upload import upload_v1
 from app.routers.government_docs import government_docs
 from app.routers.dynamic_documents import dynamic_documents_v1
+
+# In app/core/app_configs.py, replace the profile import with:
+from app.routers.profile import minimal_profile_v1
 
 # OAuth2 scheme for Swagger UI
 oauth2_scheme = OAuth2PasswordBearer(
@@ -109,10 +114,13 @@ def create_app() -> FastAPI:
     app.include_router(gram_sevaks_v1.router)
     app.include_router(preset_v1.router)
     app.include_router(users_v1.router)
+    app.include_router(profile_v1.router)  # Add the new profile router
     app.include_router(upload_v1.router)
     app.include_router(government_docs.router)
     app.include_router(dynamic_documents_v1.router)
-    
+    # And in create_app():
+    app.include_router(minimal_profile_v1.router)  # Use minimal router
+
     # Add API checks middleware after CORS middleware
     app.add_middleware(ApiChecksMW)
 
