@@ -1,4 +1,4 @@
-# app/core/app_configs.py - Updated to include profile router
+# app/core/app_configs.py - Updated to include document status router
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
@@ -12,7 +12,7 @@ from app.routers.districts import districts_v1
 from app.routers.gram_sevaks import gram_sevaks_v1
 from app.routers.preset import preset_v1
 from app.routers.users import users_v1
-from app.routers.profile import profile_v1  # New profile router
+from app.routers.profile import profile_v1
 from app.core.api_checks_mw import ApiChecksMW
 from app.core.core_exceptions import UnauthorizedException, InvalidRequestException, \
     NotFoundException, ConflictException, NotAcceptable
@@ -20,29 +20,34 @@ from app.routers.upload import upload_v1
 from app.routers.government_docs import government_docs
 from app.routers.dynamic_documents import dynamic_documents_v1
 
-# In app/core/app_configs.py, replace the profile import with:
-from app.routers.profile import minimal_profile_v1
+# Import the new document status router
+try:
+    from app.routers.document_status import document_status_v1
+    DOCUMENT_STATUS_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Could not import document status router: {e}")
+    DOCUMENT_STATUS_AVAILABLE = False
 
 # OAuth2 scheme for Swagger UI
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/v1/auth/login",  # This should match your login endpoint
+    tokenUrl="/v1/auth/login",
     description="JWT token authentication"
 )
 
-# Alternative: Bearer token scheme
+# Bearer token scheme
 bearer_scheme = HTTPBearer(
     scheme_name="Bearer Token",
     description="Enter your JWT token"
 )
 
 def create_app() -> FastAPI:
-    '''
+    """
     For creating and configuring the FastAPI application
-    '''
+    """
 
     app = FastAPI(
         title="GramSevak Seva API",
-        description="APIs for GramSevak management with JWT authentication",
+        description="APIs for GramSevak management with JWT authentication and document status tracking",
         version="1.0.0",
         docs_url="/docs",
         redoc_url="/redoc"
@@ -56,7 +61,7 @@ def create_app() -> FastAPI:
         openapi_schema = get_openapi(
             title="GramSevak Seva API",
             version="1.0.0",
-            description="APIs for GramSevak management",
+            description="APIs for GramSevak management with document upload progress tracking",
             routes=app.routes,
         )
         
@@ -107,19 +112,24 @@ def create_app() -> FastAPI:
         expose_headers=["*"]
     )
 
-    # Include routers with optional prefixes
+    # Include existing routers
     app.include_router(auth_v1.router)
     app.include_router(blocks_v1.router)
     app.include_router(districts_v1.router)
     app.include_router(gram_sevaks_v1.router)
     app.include_router(preset_v1.router)
     app.include_router(users_v1.router)
-    app.include_router(profile_v1.router)  # Add the new profile router
+    app.include_router(profile_v1.router)
     app.include_router(upload_v1.router)
     app.include_router(government_docs.router)
     app.include_router(dynamic_documents_v1.router)
-    # And in create_app():
-    app.include_router(minimal_profile_v1.router)  # Use minimal router
+    
+    # Include the new document status router
+    if DOCUMENT_STATUS_AVAILABLE:
+        app.include_router(document_status_v1.router)
+        print("✅ Document status router loaded successfully")
+    else:
+        print("⚠️  Document status router not available - some features may be limited")
 
     # Add API checks middleware after CORS middleware
     app.add_middleware(ApiChecksMW)
@@ -145,3 +155,16 @@ def create_app() -> FastAPI:
         return await HttpErrors.http_409(e)
 
     return app
+
+# Add this file: app/routers/document_status/__init__.py
+"""
+# app/routers/document_status/__init__.py
+Document status tracking router package
+"""
+
+# Create the router file structure:
+# app/
+#   routers/
+#     document_status/
+#       __init__.py
+#       document_status_v1.py  # The router code I provided earlier

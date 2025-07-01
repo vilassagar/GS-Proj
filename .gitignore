@@ -197,3 +197,8 @@ cython_debug/
 Backend/alembic/versions/33192eceb1e9_new_initial_migration.py
 Backend/alembic/versions/33192eceb1e9_new_initial_migration.py
 /Backend/gsvenv
+/.vs/GS-Proj/v17
+/.vs/GS-Proj/FileContentIndex
+/backendapp/.vs/backendapp
+/.vs
+*.user
