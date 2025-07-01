@@ -57,16 +57,19 @@ except Exception as e:
     s3_client = None
     bucket_name = None
 
+
 def snake_to_camel(snake_str: str) -> str:
     """Convert snake_case to camelCase"""
     components = snake_str.split('_')
     return components[0] + ''.join(x.capitalize() for x in components[1:])
+
 
 def dict_to_camel(data: dict) -> dict:
     """Convert dictionary keys from snake_case to camelCase"""
     if isinstance(data, dict):
         return {snake_to_camel(k): dict_to_camel(v) if isinstance(v, dict) else v for k, v in data.items()}
     return data
+
 
 class ProfileService:
     
@@ -133,7 +136,7 @@ class ProfileService:
     
     @staticmethod
     def validate_profile_completeness(db: Session, user_id: int) -> Dict[str, Any]:
-        """Validate if user's profile is complete - FIXED VERSION"""
+        """FIXED: Validate if user's profile is complete - with field_definitions"""
         
         print(f"🔍 Starting profile validation for user {user_id}")
         
@@ -170,7 +173,6 @@ class ProfileService:
         mandatory_doc_types = []
         for dt in all_doc_types:
             try:
-                # Handle both DTO objects and regular objects
                 is_mandatory = getattr(dt, 'is_mandatory', False)
                 if is_mandatory:
                     mandatory_doc_types.append(dt)
@@ -184,23 +186,34 @@ class ProfileService:
         user_documents = UserDocumentDal.get_user_documents(db, user_id)
         uploaded_doc_type_ids = {getattr(doc, 'document_type_id', 0) for doc in user_documents}
         
-        # Find missing mandatory documents
+        # Find missing mandatory documents - WITH field_definitions
         missing_mandatory_documents = []
         for doc_type in mandatory_doc_types:
             try:
                 doc_id = getattr(doc_type, 'id', 0)
                 if doc_id not in uploaded_doc_type_ids:
-                    # Safe attribute access with fallbacks
+                    # Get field_definitions - could be JSON string or dict
+                    field_definitions = getattr(doc_type, 'field_definitions', None)
+                    
+                    # Parse field_definitions if it's a string
+                    if isinstance(field_definitions, str):
+                        try:
+                            import json
+                            field_definitions = json.loads(field_definitions)
+                        except (json.JSONDecodeError, TypeError):
+                            field_definitions = None
+                    
                     missing_doc = {
                         "documentTypeId": doc_id,
                         "documentTypeName": getattr(doc_type, 'name', ''),
                         "documentTypeNameEnglish": getattr(doc_type, 'name_english', ''),
                         "isMandatory": getattr(doc_type, 'is_mandatory', True),
                         "category": getattr(doc_type, 'category', 'other'),
-                        "instructions": getattr(doc_type, 'instructions', 'Please upload this document')
+                        "instructions": getattr(doc_type, 'instructions', 'Please upload this document'),
+                        "fieldDefinitions": field_definitions  # ✅ NOW INCLUDED!
                     }
                     
-                    print(f"📋 Missing: {missing_doc['documentTypeNameEnglish']} (category: {missing_doc['category']})")
+                    print(f"📋 Missing: {missing_doc['documentTypeNameEnglish']} (category: {missing_doc['category']}, has fields: {field_definitions is not None})")
                     missing_mandatory_documents.append(missing_doc)
             except Exception as e:
                 print(f"⚠️  Error processing doc type: {e}")
@@ -250,7 +263,6 @@ class ProfileService:
         
         print(f"✅ Validation complete: {completion_percentage:.1f}% ({len(missing_mandatory_documents)} missing docs)")
         
-        # Return with safe attribute access
         return {
             "isComplete": is_complete,
             "missingBasicFields": missing_basic_fields,
@@ -259,7 +271,166 @@ class ProfileService:
             "completionPercentage": round(completion_percentage, 2),
             "nextSteps": next_steps
         }
-    
+
+    @staticmethod
+    def get_document_types(
+        db: Session, 
+        category: Optional[str] = None,
+        is_mandatory: Optional[bool] = None
+    ) -> List[Dict[str, Any]]:
+        """FIXED: Get available document types - with field_definitions"""
+        
+        doc_types = DocumentTypeDal.get_all_document_types(db)
+        
+        # Filter by category if provided
+        if category:
+            doc_types = [dt for dt in doc_types if getattr(dt, 'category', 'other') == category]
+        
+        # Filter by mandatory status if provided
+        if is_mandatory is not None:
+            doc_types = [dt for dt in doc_types if getattr(dt, 'is_mandatory', False) == is_mandatory]
+        
+        result = []
+        for dt in doc_types:
+            # Get field_definitions - could be JSON string or dict
+            field_definitions = getattr(dt, 'field_definitions', None)
+            
+            # Parse field_definitions if it's a string
+            if isinstance(field_definitions, str):
+                try:
+                    import json
+                    field_definitions = json.loads(field_definitions)
+                except (json.JSONDecodeError, TypeError):
+                    field_definitions = None
+            
+            # Get allowed formats
+            allowed_formats = getattr(dt, 'allowed_formats', 'pdf,jpg,jpeg,png,doc,docx')
+            if isinstance(allowed_formats, str):
+                allowed_formats = allowed_formats.split(',')
+            
+            doc_dict = {
+                "documentTypeId": getattr(dt, 'id', 0),
+                "documentTypeName": getattr(dt, 'name', ''),
+                "documentTypeNameEnglish": getattr(dt, 'name_english', ''),
+                "category": getattr(dt, 'category', 'other'),
+                "isMandatory": getattr(dt, 'is_mandatory', False),
+                "instructions": getattr(dt, 'instructions', 'Please upload this document'),
+                "maxFileSizeMb": getattr(dt, 'max_file_size_mb', 5),
+                "allowedFormats": allowed_formats,
+                "fieldDefinitions": field_definitions  # ✅ NOW INCLUDED!
+            }
+            
+            result.append(doc_dict)
+        
+        print(f"✅ Returning {len(result)} document types with field definitions")
+        return result
+
+    @staticmethod
+    def get_documents_by_category(db: Session, user_id: int) -> List[Dict[str, Any]]:
+        """FIXED: Get documents organized by category - with field_definitions"""
+        
+        print(f"🔍 Getting documents by category for user {user_id}")
+        
+        # Get all document types and user's uploaded documents
+        all_doc_types = DocumentTypeDal.get_all_document_types(db)
+        user_documents = UserDocumentDal.get_user_documents(db, user_id)
+        
+        # Group documents by category
+        documents_by_category = []
+        
+        for category in DocumentCategory:
+            category_config = DOCUMENT_CATEGORIES_CONFIG.get(category, {})
+            
+            # Get document types for this category
+            category_doc_types = [
+                dt for dt in all_doc_types 
+                if getattr(dt, 'category', 'other') == category.value
+            ]
+            
+            # Get uploaded documents for this category
+            uploaded_docs = []
+            for doc in user_documents:
+                # Check if this document belongs to this category
+                for dt in category_doc_types:
+                    if getattr(dt, 'id', 0) == getattr(doc, 'document_type_id', 0):
+                        uploaded_docs.append({
+                            "documentId": getattr(doc, 'id', 0),
+                            "documentTypeId": getattr(doc, 'document_type_id', 0),
+                            "documentTypeName": getattr(doc, 'document_type', ''),
+                            "documentTypeNameEnglish": getattr(doc, 'document_type_english', ''),
+                            "category": category.value,
+                            "filePath": getattr(doc, 'file_path', ''),
+                            "verificationStatus": getattr(doc, 'verification_status', 'PENDING'),
+                            "uploadedAt": doc.created_at.isoformat() if hasattr(doc, 'created_at') and doc.created_at else '',
+                            "adminComments": getattr(doc, 'admin_comments', None)
+                        })
+                        break
+            
+            # Calculate completion status
+            mandatory_types_count = len([dt for dt in category_doc_types if getattr(dt, 'is_mandatory', False)])
+            uploaded_mandatory_count = 0
+            
+            for doc in uploaded_docs:
+                for dt in category_doc_types:
+                    if getattr(dt, 'id', 0) == doc["documentTypeId"] and getattr(dt, 'is_mandatory', False):
+                        uploaded_mandatory_count += 1
+                        break
+            
+            completion_status = {
+                "totalTypes": len(category_doc_types),
+                "mandatoryTypes": mandatory_types_count,
+                "uploadedCount": len(uploaded_docs),
+                "uploadedMandatoryCount": uploaded_mandatory_count,
+                "isComplete": uploaded_mandatory_count >= mandatory_types_count,
+                "completionPercentage": (uploaded_mandatory_count / mandatory_types_count * 100) if mandatory_types_count > 0 else 100
+            }
+            
+            # Only include categories that have document types
+            if category_doc_types:
+                # Build document types for this category - WITH field_definitions
+                document_types_for_category = []
+                for dt in category_doc_types:
+                    # Get field_definitions - could be JSON string or dict
+                    field_definitions = getattr(dt, 'field_definitions', None)
+                    
+                    # Parse field_definitions if it's a string
+                    if isinstance(field_definitions, str):
+                        try:
+                            import json
+                            field_definitions = json.loads(field_definitions)
+                        except (json.JSONDecodeError, TypeError):
+                            field_definitions = None
+                    
+                    # Get allowed formats
+                    allowed_formats = getattr(dt, 'allowed_formats', 'pdf,jpg,jpeg,png,doc,docx')
+                    if isinstance(allowed_formats, str):
+                        allowed_formats = allowed_formats.split(',')
+                    
+                    document_types_for_category.append({
+                        "documentTypeId": getattr(dt, 'id', 0),
+                        "documentTypeName": getattr(dt, 'name', ''),
+                        "documentTypeNameEnglish": getattr(dt, 'name_english', ''),
+                        "category": category.value,
+                        "isMandatory": getattr(dt, 'is_mandatory', False),
+                        "instructions": getattr(dt, 'instructions', 'Please upload this document'),
+                        "maxFileSizeMb": getattr(dt, 'max_file_size_mb', 5),
+                        "allowedFormats": allowed_formats,
+                        "fieldDefinitions": field_definitions  # ✅ NOW INCLUDED!
+                    })
+                
+                documents_by_category.append({
+                    "category": category.value,
+                    "categoryName": category_config.get("name", category.value),
+                    "categoryNameEnglish": category_config.get("name_english", category.value),
+                    "description": category_config.get("description"),
+                    "documentTypes": document_types_for_category,
+                    "uploadedDocuments": uploaded_docs,
+                    "completionStatus": completion_status
+                })
+        
+        print(f"✅ Returning {len(documents_by_category)} categories with field definitions")
+        return documents_by_category
+
     @staticmethod
     def update_basic_details(
         db: Session, 
@@ -444,121 +615,6 @@ class ProfileService:
             "message": "Document deleted successfully",
             "document_id": document_id
         }
-    
-    @staticmethod
-    def get_document_types(
-        db: Session, 
-        category: Optional[str] = None,
-        is_mandatory: Optional[bool] = None
-    ) -> List[Dict[str, Any]]:
-        """Get available document types, optionally filtered by category"""
-        
-        doc_types = DocumentTypeDal.get_all_document_types(db)
-        
-        # Filter by category if provided
-        if category:
-            doc_types = [dt for dt in doc_types if getattr(dt, 'category', 'other') == category]
-        
-        # Filter by mandatory status if provided
-        if is_mandatory is not None:
-            doc_types = [dt for dt in doc_types if getattr(dt, 'is_mandatory', False) == is_mandatory]
-        
-        return [
-            {
-                "documentTypeId": getattr(dt, 'id', 0),
-                "documentTypeName": getattr(dt, 'name', ''),
-                "documentTypeNameEnglish": getattr(dt, 'name_english', ''),
-                "category": getattr(dt, 'category', 'other'),
-                "isMandatory": getattr(dt, 'is_mandatory', False),
-                "instructions": getattr(dt, 'instructions', 'Please upload this document'),
-                "field_definitions": getattr(dt, 'field_definitions', []),
-                "maxFileSizeMb": getattr(dt, 'max_file_size_mb', 5),
-                "allowedFormats": getattr(dt, 'allowed_formats', 'pdf,jpg,jpeg,png,doc,docx').split(',') if isinstance(getattr(dt, 'allowed_formats', ''), str) else ["pdf", "jpg", "jpeg", "png", "doc", "docx"]
-            } for dt in doc_types
-        ]
-    
-    @staticmethod
-    def get_documents_by_category(db: Session, user_id: int) -> List[Dict[str, Any]]:
-        """Get documents organized by category with completion status"""
-        
-        # Get all document types and user's uploaded documents
-        all_doc_types = DocumentTypeDal.get_all_document_types(db)
-        user_documents = UserDocumentDal.get_user_documents(db, user_id)
-        
-        # Group documents by category
-        documents_by_category = []
-        
-        for category in DocumentCategory:
-            category_config = DOCUMENT_CATEGORIES_CONFIG.get(category, {})
-            
-            # Get document types for this category
-            category_doc_types = [
-                dt for dt in all_doc_types 
-                if getattr(dt, 'category', 'other') == category.value
-            ]
-            
-            # Get uploaded documents for this category
-            uploaded_docs = []
-            for doc in user_documents:
-                # Check if this document belongs to this category
-                for dt in category_doc_types:
-                    if getattr(dt, 'id', 0) == getattr(doc, 'document_type_id', 0):
-                        uploaded_docs.append({
-                            "documentId": getattr(doc, 'id', 0),
-                            "documentTypeId": getattr(doc, 'document_type_id', 0),
-                            "documentTypeName": getattr(doc, 'document_type', ''),
-                            "documentTypeNameEnglish": getattr(doc, 'document_type_english', ''),
-                            "category": category.value,                         
-                            "filePath": getattr(doc, 'file_path', ''),
-                            "verificationStatus": getattr(doc, 'verification_status', 'PENDING'),
-                            "uploadedAt": doc.created_at.isoformat() if hasattr(doc, 'created_at') and doc.created_at else '',
-                            "adminComments": getattr(doc, 'admin_comments', None)
-                        })
-                        break
-            
-            # Calculate completion status
-            mandatory_types_count = len([dt for dt in category_doc_types if getattr(dt, 'is_mandatory', False)])
-            uploaded_mandatory_count = 0
-            
-            for doc in uploaded_docs:
-                for dt in category_doc_types:
-                    if getattr(dt, 'id', 0) == doc["documentTypeId"] and getattr(dt, 'is_mandatory', False):
-                        uploaded_mandatory_count += 1
-                        break
-            
-            completion_status = {
-                "totalTypes": len(category_doc_types),
-                "mandatoryTypes": mandatory_types_count,
-                "uploadedCount": len(uploaded_docs),
-                "uploadedMandatoryCount": uploaded_mandatory_count,
-                "isComplete": uploaded_mandatory_count >= mandatory_types_count,
-                "completionPercentage": (uploaded_mandatory_count / mandatory_types_count * 100) if mandatory_types_count > 0 else 100
-            }
-            
-            # Only include categories that have document types
-            if category_doc_types:
-                documents_by_category.append({
-                    "category": category.value,
-                    "categoryName": category_config.get("name", category.value),
-                    "categoryNameEnglish": category_config.get("name_english", category.value),
-                    "description": category_config.get("description"),
-                    "documentTypes": [
-                        {
-                            "documentTypeId": getattr(dt, 'id', 0),
-                            "documentTypeName": getattr(dt, 'name', ''),
-                            "documentTypeNameEnglish": getattr(dt, 'name_english', ''),
-                            "category": category.value,
-                            "isMandatory": getattr(dt, 'is_mandatory', False),
-                            "instructions": getattr(dt, 'instructions', 'Please upload this document'),
-                            "maxFileSizeMb": getattr(dt, 'max_file_size_mb', 5),
-                            "allowedFormats": getattr(dt, 'allowed_formats', 'pdf,jpg,jpeg,png,doc,docx').split(',') if isinstance(getattr(dt, 'allowed_formats', ''), str) else ["pdf", "jpg", "jpeg", "png", "doc", "docx"]
-                        } for dt in category_doc_types
-                    ],
-                    "uploadedDocuments": uploaded_docs,
-                    "completionStatus": completion_status
-                })
-        
-        return documents_by_category
     
     @staticmethod
     def get_document_categories() -> List[Dict[str, Any]]:
