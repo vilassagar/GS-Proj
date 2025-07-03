@@ -84,7 +84,7 @@ function Login() {
     let response = await login(details);
     if (response?.status === "success") {
       updateUser(response?.data);
-      navigate("/");
+      navigate("/mydashboard");
     } else {
       toast.error("लॉगिन अयशस्वी, कृपया तपासा");
     }

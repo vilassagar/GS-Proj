@@ -227,17 +227,19 @@ function Profile() {
       setDistricts(res2?.data);
       let response = await getGramSevakById(user?.userId);
       if (response.status === "success") {
+        var basicDetails = response.data.basicDetails;
+        console.log("Basic Details:", basicDetails);
         let blockResponse = await getBlocksByDistrictId(
-          response?.data?.district?.districtId
+          basicDetails?.district?.districtId
         );
         setBlocks(blockResponse?.data);
 
         let panchayatResponse = await getPanchayatByBlockId(
-          response?.data?.gramPanchayat?.gramPanchayatId
+          basicDetails?.gramPanchayat?.gramPanchayatId
         );
         setPanchayats(panchayatResponse?.data);
 
-        setGramSevak(response.data);
+        setGramSevak(basicDetails);
       } else {
         toast.error("Unable to get gramsevak details");
       }

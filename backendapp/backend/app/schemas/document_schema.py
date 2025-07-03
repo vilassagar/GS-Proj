@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from enum import Enum
 from app.schemas.base import CamelCaseModel
+
 class DocumentCategory(str, Enum):
     """Document categories for organizing different types of documents"""
     IDENTITY_PROOF = "identity_proof"
@@ -26,14 +27,28 @@ class DocumentType(CamelCaseModel):
     allowed_formats: List[str] = ["pdf", "jpg", "jpeg", "png", "doc", "docx"]
     field_definitions: Optional[Dict[str, Any]] = None
 
-class DocumentCategoryResponse(CamelCaseModel):
-    """Response model for document categories with their types"""
+class DocumentTypeResponse(CamelCaseModel):
+    """Response model for document types with additional metadata"""
+    document_type_id: int = Field(..., alias="documentTypeId")
+    document_type_name: str = Field(..., alias="documentTypeName")
+    document_type_name_english: str = Field(..., alias="documentTypeNameEnglish")
     category: DocumentCategory
-    category_name: str
-    category_name_english: str
-    description: Optional[str] = None
-    document_types: List[DocumentType] = []
+    is_mandatory: bool = Field(..., alias="isMandatory")
+    instructions: Optional[str] = None
+    max_file_size_mb: int = Field(5, alias="maxFileSizeMb")
+    allowed_formats: List[str] = Field(["pdf", "jpg", "jpeg", "png", "doc", "docx"], alias="allowedFormats")
+    field_definitions: Optional[Dict[str, Any]] = Field(None, alias="fieldDefinitions")
     
     class Config(CamelCaseModel.Config):
         from_attributes = True
 
+class DocumentCategoryResponse(CamelCaseModel):
+    """Response model for document categories with their types"""
+    category: DocumentCategory
+    category_name: str = Field(..., alias="categoryName")
+    category_name_english: str = Field(..., alias="categoryNameEnglish")
+    description: Optional[str] = None
+    document_types: List[DocumentTypeResponse] = Field(..., alias="documentTypes")
+    
+    class Config(CamelCaseModel.Config):
+        from_attributes = True

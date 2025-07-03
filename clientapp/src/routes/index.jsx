@@ -2,6 +2,8 @@ import ApprovalPending from "@/pages/ApprovalPending";
 import BlockAdmins from "@/pages/BlockAdmins";
 import Books from "@/pages/Books";
 import Dashboard from "@/pages/Dashboard";
+import MyDashboard from "@/pages/MyDashboard";
+
 import DistrictAdmins from "@/pages/DistrictAdmins";
 import DocumentUpload from "@/pages/DocumentUpload";
 import GramSevaks from "@/pages/GramSevaks";
@@ -28,6 +30,12 @@ const routes = [
     path: "/",
     component: <Dashboard />,
   },
+  {
+    exact: true,
+    path: "/mydashboard",
+    component: <MyDashboard />,
+  },
+
   {
     exact: true,
     path: "/books",
