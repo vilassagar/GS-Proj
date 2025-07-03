@@ -33,16 +33,19 @@ async def login(login_info: LoginRequestSchema, db: Session = Depends(get_db)):
                                                                otp=login_info.otp,
                                                                db=db)
 
+    if user_with_details is None:
+        return {"message": "User not found or invalid OTP"}, 404
+
     return {"message: ": "Logged in Successfully",
             "userId": user_with_details.id,
             "accessToken": access_token,
-            "roleId": user_with_details.role.id,
-            "roleName": user_with_details.role.name,
+            "roleId": user_with_details.role.id if user_with_details.role else None,
+            "roleName": user_with_details.role.name if user_with_details.role else None,
             "userEmail": user_with_details.email,
             "blockId": user_with_details.block_id,
-            "blockName": user_with_details.block.block_name,
+            "blockName": user_with_details.block.block_name if user_with_details.block else None,
             "districtId": user_with_details.district_id,
-            "distrcictName": user_with_details.district.district_name,
+            "distrcictName": user_with_details.district.district_name if user_with_details.district else None,
             "isApprovalPending": user_with_details.status != ApprovalStatus.APPROVED,
             "isDocumentUploadComplete": user_with_details.documents_uploaded,
             # Todo take necessary details later

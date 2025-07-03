@@ -10,13 +10,6 @@ from app.core.core_exceptions import UnauthorizedException, InvalidRequestExcept
     NotFoundException, ConflictException, NotAcceptable
 from app.api.routes.v1 import auth, blocks, districts, gram_sevaks, preset, profile, gram_sevaks,document_status
 
-# from app.routers.auth import auth_v1
-# from app.routers.blocks import blocks_v1
-# from app.routers.districts import districts_v1
-# from app.routers.gram_sevaks import gram_sevaks_v1
-# from app.routers.preset import preset_v1
-# from app.routers.users import users_v1
-# from app.routers.profile import profile_v1
 
 # OAuth2 scheme for Swagger UI
 oauth2_scheme = OAuth2PasswordBearer(

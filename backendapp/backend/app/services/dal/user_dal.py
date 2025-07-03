@@ -8,7 +8,7 @@ from app.models.enums.user_designation import UserDesignation
 from app.models.users import User
 from app.services.dal.dto.user_dto import UserDTO, UserWithDetailsDTO
 from app.services.dal.role_dal import RoleDal
-
+from app.models.documents import UserDocument
 
 class UserDal:
 

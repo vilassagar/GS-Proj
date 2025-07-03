@@ -85,6 +85,9 @@ class AuthService:
 
         user = UserDal.get_user_by_mobile_or_whatsapp_number(db=db, mobile_number=mobile_number)
 
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
         # In development, always accept "1111" as valid OTP
         is_development = (
             getattr(settings, 'environment', 'development') == 'development' or
