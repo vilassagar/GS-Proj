@@ -35,7 +35,10 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Get the DATABASE_URL from environment variables
-DATABASE_URL =postgresql://postgres:#Mystack9393#@localhost:5432/Gs_DB
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set in the environment variables or .env file.")
 
 # Set the sqlalchemy.url in alembic config
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
@@ -63,8 +66,11 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
+    url = config.get_main_option("sqlalchemy.url")
+    if not url:
+        raise RuntimeError("sqlalchemy.url is not set in Alembic config.")
     connectable = create_engine(
-        config.get_main_option("sqlalchemy.url"),
+        url,
         poolclass=pool.NullPool,
     )
 

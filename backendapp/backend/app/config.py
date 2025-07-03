@@ -14,22 +14,24 @@ class Settings(BaseSettings):
     '''
         Settings class to set the environment variables
     '''
-    
+    # API settings
+    API_V1_STR: str = "/api/v1"
+    PROJECT_NAME: str = "Gram Sevak Seva portal"
 
     # Database Details
-    database_url: str
+    database_url: str = os.getenv("DATABASE_URL", "")
 
     # Twilio details
-    twilio_account_sid: str
-    twilio_auth_token: str
-    twilio_phone_number: str
+    twilio_account_sid: str = os.getenv("TWILIO_ACCOUNT_SID", "")
+    twilio_auth_token: str = os.getenv("TWILIO_AUTH_TOKEN", "")
+    twilio_phone_number: str = os.getenv("TWILIO_PHONE_NUMBER", "")
 
     # AUTH - JWT and Access Token
-    access_token_expiry: int
-    refresh_token_expiry: int
+    access_token_expiry: int = int(os.getenv("ACCESS_TOKEN_EXPIRY", "15"))
+    refresh_token_expiry: int = int(os.getenv("REFRESH_TOKEN_EXPIRY", "60"))
 
-    jwt_secret_key: str
-    jwt_algorithm: str
+    jwt_secret_key: str = os.getenv("JWT_SECRET_KEY", "")
+    jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
 
     # Common Utils vars
     otp_expiry_time: int = 5

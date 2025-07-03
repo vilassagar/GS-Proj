@@ -202,3 +202,4 @@ Backend/alembic/versions/33192eceb1e9_new_initial_migration.py
 /backendapp/.vs/backendapp
 /.vs
 *.user
+/backendapp/.vs

@@ -1,11 +1,10 @@
 from copy import deepcopy
 from datetime import timedelta, datetime, timezone
 
-import jwt
-from jwt import ExpiredSignatureError, DecodeError, InvalidTokenError
+from jwt import encode, decode, ExpiredSignatureError, DecodeError, InvalidTokenError
 
 from app.config import settings
-from app.core.core_exception import UnauthorizedException
+from app.core.core_exceptions import UnauthorizedException
 
 # JWT secret key and algorithm
 JWT_SECRET = settings.jwt_secret_key
@@ -38,8 +37,7 @@ class VxJWTUtils:
 
         to_encode.update({"exp": expiry_in})  
 
-        encoded_jwt = jwt.encode(payload=to_encode, key=JWT_SECRET, algorithm=JWT_ALGO)
-
+        encoded_jwt = encode(payload=to_encode, key=JWT_SECRET, algorithm=JWT_ALGO)
         return encoded_jwt
 
     @staticmethod
@@ -50,10 +48,9 @@ class VxJWTUtils:
 
         try:
             print("\n In Verify access token: \n")
-            payload = jwt.decode(jwt=token, key=JWT_SECRET, algorithms=[JWT_ALGO])
-            print("\n printing payload: ", payload)
+            print("\n In Verify access token: \n")
+            payload = decode(jwt=token, key=JWT_SECRET, algorithms=[JWT_ALGO])
             return payload
-
         except ExpiredSignatureError:
             raise UnauthorizedException("JWT Token has expired")
 

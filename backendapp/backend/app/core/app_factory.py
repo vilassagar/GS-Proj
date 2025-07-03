@@ -1,32 +1,22 @@
-# app/core/app_configs.py - Updated to include document status router
+## app/core/app_factory.py
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.openapi.utils import get_openapi
-
 from app.core.http_errors import HttpErrors
-from app.routers import file_search_poc
-from app.routers.auth import auth_v1
-from app.routers.blocks import blocks_v1
-from app.routers.districts import districts_v1
-from app.routers.gram_sevaks import gram_sevaks_v1
-from app.routers.preset import preset_v1
-from app.routers.users import users_v1
-from app.routers.profile import profile_v1
 from app.core.api_checks_mw import ApiChecksMW
 from app.core.core_exceptions import UnauthorizedException, InvalidRequestException, \
     NotFoundException, ConflictException, NotAcceptable
-from app.routers.upload import upload_v1
-from app.routers.government_docs import government_docs
-from app.routers.dynamic_documents import dynamic_documents_v1
+from app.api.routes.v1 import auth, blocks, districts, gram_sevaks, preset, profile, gram_sevaks,document_status
 
-# Import the new document status router
-try:
-    from app.routers.document_status import document_status_v1
-    DOCUMENT_STATUS_AVAILABLE = True
-except ImportError as e:
-    print(f"Warning: Could not import document status router: {e}")
-    DOCUMENT_STATUS_AVAILABLE = False
+# from app.routers.auth import auth_v1
+# from app.routers.blocks import blocks_v1
+# from app.routers.districts import districts_v1
+# from app.routers.gram_sevaks import gram_sevaks_v1
+# from app.routers.preset import preset_v1
+# from app.routers.users import users_v1
+# from app.routers.profile import profile_v1
 
 # OAuth2 scheme for Swagger UI
 oauth2_scheme = OAuth2PasswordBearer(
@@ -40,18 +30,14 @@ bearer_scheme = HTTPBearer(
     description="Enter your JWT token"
 )
 
-def create_app() -> FastAPI:
-    """
-    For creating and configuring the FastAPI application
-    """
 
-    app = FastAPI(
-        title="GramSevak Seva API",
-        description="APIs for GramSevak management with JWT authentication and document status tracking",
-        version="1.0.0",
-        docs_url="/docs",
-        redoc_url="/redoc"
-    )
+def create_app() -> FastAPI:
+    app = FastAPI(title="GramSevak Seva API",
+description="APIs for GramSevak management with JWT authentication and document status tracking",
+version="1.0.0",
+docs_url="/docs",
+redoc_url="/redoc")
+    # Custom OpenAPI schema with security
 
     # Custom OpenAPI schema with security
     def custom_openapi():
@@ -112,24 +98,14 @@ def create_app() -> FastAPI:
         expose_headers=["*"]
     )
 
-    # Include existing routers
-    app.include_router(auth_v1.router)
-    app.include_router(blocks_v1.router)
-    app.include_router(districts_v1.router)
-    app.include_router(gram_sevaks_v1.router)
-    app.include_router(preset_v1.router)
-    app.include_router(users_v1.router)
-    app.include_router(profile_v1.router)
-    app.include_router(upload_v1.router)
-    app.include_router(government_docs.router)
-    app.include_router(dynamic_documents_v1.router)
-    
-    # Include the new document status router
-    if DOCUMENT_STATUS_AVAILABLE:
-        app.include_router(document_status_v1.router)
-        print("✅ Document status router loaded successfully")
-    else:
-        print("⚠️  Document status router not available - some features may be limited")
+     # Include existing routers
+    app.include_router(auth.router)
+    app.include_router(blocks.router)
+    app.include_router(districts.router)
+    app.include_router(gram_sevaks.router)
+    app.include_router(preset.router)
+    app.include_router(profile.router)
+    app.include_router(document_status.router)
 
     # Add API checks middleware after CORS middleware
     app.add_middleware(ApiChecksMW)
@@ -154,5 +130,6 @@ def create_app() -> FastAPI:
     async def conflict_exception_handler(request: Request, e: ConflictException):
         return await HttpErrors.http_409(e)
 
-    return app
 
+    # You can add middleware, routers, etc. here if needed
+    return app
