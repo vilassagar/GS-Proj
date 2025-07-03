@@ -1,9 +1,10 @@
 # app/services/dal/document_dal.py - Updated for your SQLAlchemy models
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from app.models.documents import DocumentType, UserDocument
 from app.models.enums.approval_status import ApprovalStatus
 from app.services.dal.dto.document_dto import DocumentTypeDTO, UserDocumentDTO
+from sqlalchemy.orm import Session
 
 class DocumentTypeDal:
     """Updated DocumentTypeDal to properly handle category and instructions"""
@@ -71,6 +72,347 @@ class DocumentTypeDal:
         ).all()
         
         return [DocumentTypeDTO.to_dto(dt) for dt in doc_types]
+
+class DocumentTypeDalAdditionalMethods:
+    """Additional methods to add to DocumentTypeDal"""
+    
+    @staticmethod
+    def update_document_type(
+        db: Session, 
+        document_type_id: int, 
+        update_data: Dict[str, Any]
+    ) -> Optional[DocumentType]:
+        """Update a document type with new data"""
+        
+        doc_type = db.query(DocumentType).filter(
+            DocumentType.id == document_type_id,
+            DocumentType.is_active == True
+        ).first()
+        
+        if not doc_type:
+            return None
+        
+        # Update fields
+        for key, value in update_data.items():
+            if hasattr(doc_type, key):
+                setattr(doc_type, key, value)
+        
+        db.commit()
+        db.refresh(doc_type)
+        return doc_type
+    
+    @staticmethod
+    def get_document_type_with_usage_stats(
+        db: Session, 
+        document_type_id: int
+    ) -> Optional[Dict[str, Any]]:
+        """Get document type with usage statistics"""
+        
+        doc_type = db.query(DocumentType).filter(
+            DocumentType.id == document_type_id,
+            DocumentType.is_active == True
+        ).first()
+        
+        if not doc_type:
+            return None
+        
+        # Get usage statistics
+        total_uploads = db.query(UserDocument).filter(
+            UserDocument.document_type_id == document_type_id,
+            UserDocument.is_active == True
+        ).count()
+        
+        approved_uploads = db.query(UserDocument).filter(
+            UserDocument.document_type_id == document_type_id,
+            UserDocument.is_active == True,
+            UserDocument.verification_status == ApprovalStatus.APPROVED
+        ).count()
+        
+        pending_uploads = db.query(UserDocument).filter(
+            UserDocument.document_type_id == document_type_id,
+            UserDocument.is_active == True,
+            UserDocument.verification_status == ApprovalStatus.PENDING
+        ).count()
+        
+        rejected_uploads = db.query(UserDocument).filter(
+            UserDocument.document_type_id == document_type_id,
+            UserDocument.is_active == True,
+            UserDocument.verification_status == ApprovalStatus.REJECTED
+        ).count()
+        
+        return {
+            "documentType": doc_type,
+            "usageStats": {
+                "totalUploads": total_uploads,
+                "approvedUploads": approved_uploads,
+                "pendingUploads": pending_uploads,
+                "rejectedUploads": rejected_uploads,
+                "approvalRate": (approved_uploads / total_uploads * 100) if total_uploads > 0 else 0
+            }
+        }
+
+
+class UserDocumentDalAdditionalMethods:
+    """Additional methods to add to UserDocumentDal"""
+    
+    @staticmethod
+    def get_user_document_by_id(
+        db: Session, 
+        user_id: int, 
+        document_id: int
+    ) -> Optional[UserDocument]:
+        """Get a specific user document by ID, ensuring user ownership"""
+        
+        user_doc = db.query(UserDocument).filter(
+            UserDocument.id == document_id,
+            UserDocument.user_id == user_id,
+            UserDocument.is_active == True
+        ).first()
+        
+        return user_doc
+    
+    @staticmethod
+    def update_user_document(
+        db: Session, 
+        document_id: int, 
+        update_data: Dict[str, Any]
+    ) -> Optional[UserDocument]:
+        """Update a user document with new data"""
+        
+        user_doc = db.query(UserDocument).filter(
+            UserDocument.id == document_id,
+            UserDocument.is_active == True
+        ).first()
+        
+        if not user_doc:
+            return None
+        
+        # Update fields
+        for key, value in update_data.items():
+            if hasattr(user_doc, key):
+                setattr(user_doc, key, value)
+        
+        # Set updated timestamp
+        from datetime import datetime
+        user_doc.updated_at = datetime.utcnow()
+        
+        db.commit()
+        db.refresh(user_doc)
+        return user_doc
+    
+    @staticmethod
+    def get_user_documents_with_field_completion(
+        db: Session, 
+        user_id: int
+    ) -> List[Dict[str, Any]]:
+        """Get user documents with field completion analysis"""
+        
+        # Get user documents with joined document types
+        docs = db.query(UserDocument).join(
+            DocumentType, UserDocument.document_type_id == DocumentType.id
+        ).filter(
+            UserDocument.user_id == user_id,
+            UserDocument.is_active == True,
+            DocumentType.is_active == True
+        ).all()
+        
+        result = []
+        for doc in docs:
+            # Get field definitions from document type
+            field_definitions = getattr(doc.document_type, 'field_definitions', {}) or {}
+            field_values = getattr(doc, 'field_values', {}) or {}
+            
+            # Calculate field completion
+            field_completion = UserDocumentDalAdditionalMethods._calculate_field_completion(
+                field_values, field_definitions
+            )
+            
+            result.append({
+                "document": doc,
+                "fieldCompletion": field_completion,
+                "fieldDefinitions": field_definitions,
+                "fieldValues": field_values
+            })
+        
+        return result
+    
+    @staticmethod
+    def get_documents_by_verification_status(
+        db: Session, 
+        user_id: int = None, 
+        verification_status: str = None
+    ) -> List[UserDocument]:
+        """Get documents filtered by verification status"""
+        
+        query = db.query(UserDocument).join(
+            DocumentType, UserDocument.document_type_id == DocumentType.id
+        ).filter(
+            UserDocument.is_active == True,
+            DocumentType.is_active == True
+        )
+        
+        if user_id:
+            query = query.filter(UserDocument.user_id == user_id)
+        
+        if verification_status:
+            query = query.filter(UserDocument.verification_status == verification_status)
+        
+        return query.all()
+    
+    @staticmethod
+    def get_user_documents_summary(db: Session, user_id: int) -> Dict[str, Any]:
+        """Get summary statistics for user documents"""
+        
+        # Get all user documents
+        all_docs = db.query(UserDocument).filter(
+            UserDocument.user_id == user_id,
+            UserDocument.is_active == True
+        ).all()
+        
+        # Count by status
+        total_docs = len(all_docs)
+        approved_docs = len([doc for doc in all_docs if doc.verification_status == ApprovalStatus.APPROVED])
+        pending_docs = len([doc for doc in all_docs if doc.verification_status == ApprovalStatus.PENDING])
+        rejected_docs = len([doc for doc in all_docs if doc.verification_status == ApprovalStatus.REJECTED])
+        
+        # Get mandatory vs optional counts
+        mandatory_docs = db.query(UserDocument).join(
+            DocumentType, UserDocument.document_type_id == DocumentType.id
+        ).filter(
+            UserDocument.user_id == user_id,
+            UserDocument.is_active == True,
+            DocumentType.is_mandatory == True
+        ).all()
+        
+        optional_docs = db.query(UserDocument).join(
+            DocumentType, UserDocument.document_type_id == DocumentType.id
+        ).filter(
+            UserDocument.user_id == user_id,
+            UserDocument.is_active == True,
+            DocumentType.is_mandatory == False
+        ).all()
+        
+        return {
+            "totalDocuments": total_docs,
+            "approvedDocuments": approved_docs,
+            "pendingDocuments": pending_docs,
+            "rejectedDocuments": rejected_docs,
+            "mandatoryDocuments": len(mandatory_docs),
+            "optionalDocuments": len(optional_docs),
+            "approvalRate": (approved_docs / total_docs * 100) if total_docs > 0 else 0,
+            "lastUploadDate": max([doc.created_at for doc in all_docs]) if all_docs else None
+        }
+    
+    @staticmethod
+    def soft_delete_user_document(db: Session, document_id: int, user_id: int) -> bool:
+        """Soft delete a user document"""
+        
+        user_doc = db.query(UserDocument).filter(
+            UserDocument.id == document_id,
+            UserDocument.user_id == user_id,
+            UserDocument.is_active == True
+        ).first()
+        
+        if not user_doc:
+            return False
+        
+        user_doc.is_active = False
+        user_doc.updated_at = datetime.utcnow()
+        
+        db.commit()
+        return True
+    
+    @staticmethod
+    def get_documents_requiring_field_updates(db: Session, user_id: int = None) -> List[Dict[str, Any]]:
+        """Get documents that have field definitions but missing or incomplete field values"""
+        
+        query = db.query(UserDocument).join(
+            DocumentType, UserDocument.document_type_id == DocumentType.id
+        ).filter(
+            UserDocument.is_active == True,
+            DocumentType.is_active == True,
+            DocumentType.field_definitions.isnot(None)
+        )
+        
+        if user_id:
+            query = query.filter(UserDocument.user_id == user_id)
+        
+        docs = query.all()
+        
+        result = []
+        for doc in docs:
+            field_definitions = getattr(doc.document_type, 'field_definitions', {}) or {}
+            field_values = getattr(doc, 'field_values', {}) or {}
+            
+            # Check if field update is needed
+            field_completion = UserDocumentDalAdditionalMethods._calculate_field_completion(
+                field_values, field_definitions
+            )
+            
+            if not field_completion['isComplete']:
+                result.append({
+                    "document": doc,
+                    "fieldCompletion": field_completion,
+                    "missingRequiredFields": field_completion['missingRequiredFields']
+                })
+        
+        return result
+    
+    # Helper methods
+    
+    @staticmethod
+    def _calculate_field_completion(field_values: Dict[str, Any], field_definitions: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate field completion status"""
+        
+        if not field_definitions:
+            return {
+                "totalFields": 0,
+                "completedFields": 0,
+                "requiredFields": 0,
+                "completedRequiredFields": 0,
+                "isComplete": True,
+                "completionPercentage": 100,
+                "missingRequiredFields": []
+            }
+        
+        total_fields = len(field_definitions)
+        required_fields = [name for name, config in field_definitions.items() if config.get('required', False)]
+        
+        completed_fields = 0
+        completed_required_fields = 0
+        missing_required_fields = []
+        
+        for field_name, field_config in field_definitions.items():
+            field_value = field_values.get(field_name)
+            has_value = field_value is not None and field_value != ''
+            
+            if has_value:
+                completed_fields += 1
+            
+            is_required = field_config.get('required', False)
+            if is_required:
+                if has_value:
+                    completed_required_fields += 1
+                else:
+                    missing_required_fields.append({
+                        "fieldName": field_name,
+                        "label": field_config.get('label', field_name),
+                        "type": field_config.get('type', 'text'),
+                        "required": True
+                    })
+        
+        is_complete = len(missing_required_fields) == 0
+        completion_percentage = (completed_fields / total_fields * 100) if total_fields > 0 else 100
+        
+        return {
+            "totalFields": total_fields,
+            "completedFields": completed_fields,
+            "requiredFields": len(required_fields),
+            "completedRequiredFields": completed_required_fields,
+            "isComplete": is_complete,
+            "completionPercentage": round(completion_percentage, 2),
+            "missingRequiredFields": missing_required_fields
+        }
 
 class UserDocumentDal:
     """Updated UserDocumentDal to properly handle document type information"""

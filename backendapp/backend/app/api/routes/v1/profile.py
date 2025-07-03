@@ -1,4 +1,4 @@
-# app/api/routes/v1/profile.py - Enhanced version
+# app/api/routes/v1/profile.py - Updated with document update endpoints
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
@@ -228,27 +228,80 @@ VxAPIPermsUtils.set_perm_post(path=router.prefix + '/documents/upload', perm=VxA
 @router.post("/documents/upload")
 async def upload_document(
     document_type_id: int = Form(...),
-    additional_data: Optional[str] = Form(None),
+    field_values: Optional[str] = Form(None),
     file: UploadFile = File(...),
     current_user: UserDTO = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Upload a single document for the current user"""
     
-    # Parse additional data if provided
-    extra_data = {}
-    if additional_data:
+    # Parse field values if provided
+    parsed_field_values = {}
+    if field_values:
         try:
-            extra_data = json.loads(additional_data)
+            parsed_field_values = json.loads(field_values)
         except json.JSONDecodeError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid JSON in additional_data"
+                detail="Invalid JSON in field_values"
             )
     
     try:
         return await ProfileService.upload_document(
-            db, current_user.user_id, document_type_id, file, extra_data
+            db, current_user.user_id, document_type_id, file, parsed_field_values
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+# NEW: Update existing document
+VxAPIPermsUtils.set_perm_put(path=router.prefix + '/documents/{document_id}/update', perm=VxAPIPermsEnum.AUTHENTICATED)
+@router.put("/documents/{document_id}/update")
+async def update_document(
+    document_id: int,
+    field_values: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+    current_user: UserDTO = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update an existing document (replace file and/or update field values)"""
+    
+    # Parse field values if provided
+    parsed_field_values = {}
+    if field_values:
+        try:
+            parsed_field_values = json.loads(field_values)
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid JSON in field_values"
+            )
+    
+    try:
+        return await ProfileService.update_document(
+            db, current_user.user_id, document_id, file, parsed_field_values
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+# NEW: Update only field values for a document
+VxAPIPermsUtils.set_perm_patch(path=router.prefix + '/documents/{document_id}/fields', perm=VxAPIPermsEnum.AUTHENTICATED)
+@router.patch("/documents/{document_id}/fields")
+async def update_document_field_values(
+    document_id: int,
+    field_values: Dict[str, Any],
+    current_user: UserDTO = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update only the field values for an existing document"""
+    try:
+        return ProfileService.update_document_field_values(
+            db, current_user.user_id, document_id, field_values
         )
     except Exception as e:
         raise HTTPException(
@@ -300,6 +353,52 @@ async def get_document_types(
     """Get available document types, optionally filtered by category"""
     try:
         return ProfileService.get_document_types(db, category, is_mandatory)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+# NEW: Admin endpoint to update document type field definitions
+VxAPIPermsUtils.set_perm_put(path=router.prefix + '/admin/document-types/{document_type_id}/fields', perm=VxAPIPermsEnum.AUTHENTICATED)
+@router.put("/admin/document-types/{document_type_id}/fields")
+async def update_document_type_field_definitions(
+    document_type_id: int,
+    field_definitions: Dict[str, Any],
+    instructions: Optional[str] = None,
+    current_user: UserDTO = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update field definitions for a document type (Admin only)"""
+    
+    # Check admin permissions
+    if current_user.role_id not in [1]:  # Only super admin
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions. Admin access required."
+        )
+    
+    try:
+        return ProfileService.update_document_type_field_definitions(
+            db, document_type_id, field_definitions, instructions, current_user.user_id
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+# NEW: Get document with its field definition requirements
+VxAPIPermsUtils.set_perm_get(path=router.prefix + '/documents/{document_id}/details', perm=VxAPIPermsEnum.AUTHENTICATED)
+@router.get("/documents/{document_id}/details")
+async def get_document_details(
+    document_id: int,
+    current_user: UserDTO = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get detailed information about a specific document including field definitions"""
+    try:
+        return ProfileService.get_document_details(db, current_user.user_id, document_id)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
