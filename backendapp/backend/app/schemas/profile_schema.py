@@ -2,9 +2,10 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from .document_schema import DocumentCategory, DocumentType, DocumentCategoryResponse
+from .document_schema import DocumentCategory, DocumentType, DocumentCategoryResponse, DocumentTypeResponse
+from app.schemas.base import CamelCaseModel
 
-class ProfileBasicDetailsUpdate(BaseModel):
+class ProfileBasicDetailsUpdate(CamelCaseModel):
     first_name: Optional[str] = Field(None, max_length=100)
     last_name: Optional[str] = Field(None, max_length=100)
     mobile_number: Optional[str] = Field(None, max_length=15)
@@ -14,10 +15,8 @@ class ProfileBasicDetailsUpdate(BaseModel):
     block_id: Optional[int] = None
     gram_panchayat_id: Optional[int] = None
 
-    class Config:
-        from_attributes = True
 
-class ProfileDocumentResponse(BaseModel):
+class ProfileDocumentResponse(CamelCaseModel):
     document_id: int = Field(..., alias="documentId")
     document_type_id: int = Field(..., alias="documentTypeId")
     document_type_name: str = Field(..., alias="documentTypeName")
@@ -28,25 +27,10 @@ class ProfileDocumentResponse(BaseModel):
     uploaded_at: str = Field(..., alias="uploadedAt")
     admin_comments: Optional[str] = Field(None, alias="adminComments")
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
 
-class DocumentTypeResponse(BaseModel):
-    document_type_id: int = Field(..., alias="documentTypeId")
-    document_type_name: str = Field(..., alias="documentTypeName")
-    document_type_name_english: str = Field(..., alias="documentTypeNameEnglish")
-    category: Optional[DocumentCategory] = None
-    is_mandatory: bool = Field(..., alias="isMandatory")
-    instructions: Optional[str] = None
-    max_file_size_mb: int = Field(5, alias="maxFileSizeMb")
-    allowed_formats: List[str] = Field(..., alias="allowedFormats")
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
 
-class DocumentsByCategoryResponse(BaseModel):
+class DocumentsByCategoryResponse(CamelCaseModel):
     category: DocumentCategory
     category_name: str = Field(..., alias="categoryName")
     category_name_english: str = Field(..., alias="categoryNameEnglish")
@@ -55,11 +39,11 @@ class DocumentsByCategoryResponse(BaseModel):
     uploaded_documents: List[ProfileDocumentResponse] = Field(..., alias="uploadedDocuments")
     completion_status: Dict[str, Any] = Field(..., alias="completionStatus")
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    # class Config:
+    #     from_attributes = True
+    #     populate_by_name = True
 
-class ProfileBasicDetails(BaseModel):
+class ProfileBasicDetails(CamelCaseModel):
     user_id: int = Field(..., alias="userId")
     first_name: Optional[str] = Field(None, alias="firstName")
     last_name: Optional[str] = Field(None, alias="lastName")
@@ -74,20 +58,20 @@ class ProfileBasicDetails(BaseModel):
     created_at: str = Field(..., alias="createdAt")
     updated_at: Optional[str] = Field(None, alias="updatedAt")
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    # class Config:
+    #     from_attributes = True
+    #     populate_by_name = True
 
-class ProfilePermissions(BaseModel):
+class ProfilePermissions(CamelCaseModel):
     can_edit_basic_details: bool = Field(..., alias="canEditBasicDetails")
     can_upload_documents: bool = Field(..., alias="canUploadDocuments")
     can_delete_documents: bool = Field(..., alias="canDeleteDocuments")
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    # class Config:
+    #     from_attributes = True
+    #     populate_by_name = True
 
-class ProfileValidationResponse(BaseModel):
+class ProfileValidationResponse(CamelCaseModel):
     is_complete: bool = Field(..., alias="isComplete")
     missing_basic_fields: List[str] = Field(..., alias="missingBasicFields")
     missing_mandatory_documents: List[Dict[str, Any]] = Field(..., alias="missingMandatoryDocuments")
@@ -95,16 +79,16 @@ class ProfileValidationResponse(BaseModel):
     completion_percentage: float = Field(..., alias="completionPercentage")
     next_steps: List[str] = Field(..., alias="nextSteps")
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    # class Config:
+    #     from_attributes = True
+    #     populate_by_name = True
 
-class ProfileResponse(BaseModel):
+class ProfileResponse(CamelCaseModel):
     basic_details: ProfileBasicDetails = Field(..., alias="basicDetails")
     documents: Optional[List[ProfileDocumentResponse]] = None
     validation: Optional[ProfileValidationResponse]= None
     permissions: Optional[ProfilePermissions] = None
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    # class Config:
+    #     from_attributes = True
+    #     populate_by_name = True

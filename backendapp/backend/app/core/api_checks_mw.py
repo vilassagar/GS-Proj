@@ -43,7 +43,10 @@ class ApiChecksMW(BaseHTTPMiddleware):
             payload = await VxJWTUtils.verify_access_token(token=token)
 
             # Getting subject. Normally its User_id
-            sub = int(payload.get("user_id"))
+            user_id = payload.get("user_id")
+            if user_id is None:
+                raise UnauthorizedException("Token is missing Subject claims. i.e user_id")
+            sub = int(user_id)
 
             print("Printing Sub: ", sub)
 

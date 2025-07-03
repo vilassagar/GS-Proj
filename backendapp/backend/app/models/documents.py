@@ -1,11 +1,12 @@
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, TYPE_CHECKING
 from sqlalchemy import String, Boolean, Enum as SQAEnum, ForeignKey, Integer, UniqueConstraint, Index, JSON, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.config import Base
 from app.models.base import TimestampMixin
 from app.models.enums.approval_status import ApprovalStatus
-from typing import TYPE_CHECKING
+
+# Only import for type checking to avoid circular imports
 if TYPE_CHECKING:
     from app.models.users import User
 
@@ -32,8 +33,12 @@ class DocumentType(Base, TimestampMixin):
     created_by: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('users.id'))
     updated_by: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('users.id'))
 
-    # Relationships - Fixed for Python 3.8
-    user_documents: Mapped[List["UserDocument"]] = relationship("UserDocument", back_populates="document_type")
+    # Relationships - Use string references to avoid circular imports
+    user_documents: Mapped[List["UserDocument"]] = relationship(
+        "UserDocument", 
+        back_populates="document_type",
+        cascade="all, delete-orphan"
+    )
 
 
 class UserDocument(Base, TimestampMixin):
@@ -58,12 +63,20 @@ class UserDocument(Base, TimestampMixin):
     # Admin comments for verification
     admin_comments: Mapped[Optional[str]] = mapped_column(Text)
 
-    # Relationships
-    user: Mapped["User"] = relationship("User", back_populates="documents", foreign_keys=[user_id])
-    document_type: Mapped["DocumentType"] = relationship("DocumentType", back_populates="user_documents", lazy="joined")
-
     created_by: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('users.id'))
     updated_by: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('users.id'))
+
+    # Relationships - Use string references to avoid circular imports
+    user: Mapped["User"] = relationship(
+        "User", 
+        back_populates="documents",
+        foreign_keys=[user_id]
+    )
+    document_type: Mapped["DocumentType"] = relationship(
+        "DocumentType", 
+        back_populates="user_documents", 
+        lazy="joined"
+    )
 
     __table_args__ = (
         UniqueConstraint('user_id', 'document_type_id', name='uq_user_document'),

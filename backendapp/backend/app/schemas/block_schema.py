@@ -1,16 +1,16 @@
 from pydantic import BaseModel
 from typing_extensions import List
 from typing import Optional
+from app.schemas.base import CamelCaseModel
 
 
 
-
-class BlockBaseSchema(BaseModel):
+class BlockBaseSchema(CamelCaseModel):
     block_id: int
     block_name: str
 
 
-class BlockAdminUserSchema(BaseModel):
+class BlockAdminUserSchema(CamelCaseModel):
     user_id: int
     user_name: str
 
@@ -21,7 +21,7 @@ class BlockAdminResponseSchema(BlockBaseSchema):
    
 
 
-class BlockAdminUpdateRequest(BaseModel):
+class BlockAdminUpdateRequest(CamelCaseModel):
     block_id: int
     # user_id: int
     admin: BlockAdminUserSchema
@@ -29,7 +29,7 @@ class BlockAdminUpdateRequest(BaseModel):
     model_config = {"extra": "allow"}
 
 
-class BlockAdminUpdateResponse(BaseModel):
+class BlockAdminUpdateResponse(CamelCaseModel):
     success: bool
     message: str
     admin_details: BlockAdminResponseSchema

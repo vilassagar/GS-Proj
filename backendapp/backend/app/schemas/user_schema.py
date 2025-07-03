@@ -1,12 +1,15 @@
 from typing import Optional
 
-from pydantic import field_validator
+
 
 from app.models.enums.user_designation import UserDesignation
 from pydantic import EmailStr, Field,BaseModel
+from app.schemas.base import CamelCaseModel
+
+from pydantic import field_validator, EmailStr
 
 
-class SendOtpRequestSchema(BaseModel):
+class SendOtpRequestSchema(CamelCaseModel):
     """
         Send OTP Request schema for getting otp.
         Here We are validating the mobile number
@@ -61,6 +64,6 @@ class UserRegisterRequest(SendOtpRequestSchema):
     email: EmailStr
 
 
-class MessageResponse(BaseModel):
+class MessageResponse(CamelCaseModel):
     message: str
 

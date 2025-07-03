@@ -7,6 +7,7 @@ from app.models.base import TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.department import Department
+    from app.models.users import User
 
 
 class Yojana(Base, TimestampMixin):
@@ -34,6 +35,18 @@ class GR(Base, TimestampMixin):
 
     yojana: Mapped["Yojana"] = relationship("Yojana", back_populates="grs")
     department: Mapped["Department"] = relationship("Department", back_populates="grs", lazy="joined")
+    
+    # Separate relationships for audit fields
+    created_by_user: Mapped[Optional["User"]] = relationship(
+        "User",
+        foreign_keys=[created_by],
+        post_update=True
+    )
+    updated_by_user: Mapped[Optional["User"]] = relationship(
+        "User",
+        foreign_keys=[updated_by],
+        post_update=True
+    )
 
     __table_args__ = (
         Index('ix_gr_department_id_effective_date', 'department_id', 'effective_date'),

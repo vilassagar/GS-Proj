@@ -1,25 +1,42 @@
-from app.models.books import Book
-from app.models.books import Page
-from app.models.books import Word
-#from app.models.documents import UserDocument, DocumentType  # REMOVED to avoid circular import
-from app.models.users_hierarchy import District, Block, GramPanchayat
-from app.models.gr_yojana import GR, Yojana
-from app.models.otp import UserOTP
-from app.models.users import User
+# Import base models first
+from app.models.base import TimestampMixin
+
+# Import enum models
+from app.models.enums.approval_status import ApprovalStatus
+from app.models.enums.user_designation import UserDesignation
+
+# Import simple models without dependencies first
 from app.models.roles import Role
 from app.models.department import Department
+from app.models.users_hierarchy import District, Block, GramPanchayat
+from app.models.gr_yojana import GR, Yojana
+
+# Import books models
+from app.models.books import Book, Page, Word
+
+# Import users model first (since other models reference it)
+from app.models.users import User
+
+# Import dependent models after users
+from app.models.documents import DocumentType, UserDocument
+from app.models.otp import UserOTP
 
 __all__ = [
-    "Book",
-    "User",
+    "TimestampMixin",
+    "ApprovalStatus", 
+    "UserDesignation",
     "Role",
-    # "UserDocument",  # REMOVED to avoid circular import
-    # "DocumentType",   # REMOVED to avoid circular import
-    "Yojana",
-    "GR",
-    "UserOTP",
-    "District",
+    "Department",
+    "District", 
     "Block",
     "GramPanchayat",
-    "Department"
+    "GR",
+    "Yojana", 
+    "Book",
+    "Page",
+    "Word",
+    "User",
+    "DocumentType",
+    "UserDocument", 
+    "UserOTP"
 ]

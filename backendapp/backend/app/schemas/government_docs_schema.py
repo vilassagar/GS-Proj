@@ -1,9 +1,10 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import date
+from app.schemas.base import CamelCaseModel
 
 
-class BookUploadSchema(BaseModel):
+class BookUploadSchema(CamelCaseModel):
     subject: str = Field(..., description="Subject of the Book Upload")
     department_id: int = Field(..., description="Department ID", ge=1)
 

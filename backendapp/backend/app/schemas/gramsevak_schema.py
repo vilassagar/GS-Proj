@@ -3,11 +3,11 @@ from typing import List
 
 from fastapi import UploadFile
 from pydantic import BaseModel
-
+from app.schemas.base import CamelCaseModel
 from app.models.enums.approval_status import ApprovalStatus
 
 
-class GramsevakListItem(BaseModel):
+class GramsevakListItem(CamelCaseModel):
     id: int
     first_name: str
     last_name: str
@@ -19,33 +19,33 @@ class GramsevakListItem(BaseModel):
 
 
 
-class DesignationSchema(BaseModel):
+class DesignationSchema(CamelCaseModel):
     designation_id: int
     designation_name: str
 
 
-class DistrictSchema(BaseModel):
+class DistrictSchema(CamelCaseModel):
     district_id: int
     district_name: str
 
 
-class BlockSchema(BaseModel):
+class BlockSchema(CamelCaseModel):
     block_id: int
     block_name: str
 
 
-class GramPanchayatSchema(BaseModel):
+class GramPanchayatSchema(CamelCaseModel):
     gram_panchayat_id: int
     gram_panchayat_name: str
 
 
-class DocumentSchema(BaseModel):
+class DocumentSchema(CamelCaseModel):
     document_type: str
     document_name: str
     document_path: str
 
 
-class GramsevakDetailResponse(BaseModel):
+class GramsevakDetailResponse(CamelCaseModel):
     first_name: str
     last_name: str
     designation: DesignationSchema
@@ -58,11 +58,11 @@ class GramsevakDetailResponse(BaseModel):
     documents: List[DocumentSchema]
 
 
-class ChangeStatusRequest(BaseModel):
+class ChangeStatusRequest(CamelCaseModel):
     gramsevak_id: int
     status: ApprovalStatus
 
-class DocumentUploadRequest(BaseModel):
+class DocumentUploadRequest(CamelCaseModel):
     documentTypeId: int
     document: UploadFile
     # document: File

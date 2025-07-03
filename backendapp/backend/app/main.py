@@ -1,7 +1,7 @@
 # main.py
 # This file serves as the entry point for the FastAPI application.
 from fastapi import FastAPI
-from .core.app_factory import create_app  # Changed this line
+from app.core.app_factory import create_app  # Fixed import path
 from app.models.enums.vx_api_perms_enum import VxAPIPermsEnum
 from app.utils.vx_api_perms_utils import VxAPIPermsUtils
 from fastapi.responses import JSONResponse

@@ -8,7 +8,8 @@ from app.models.roles import Role
 from app.models.base import TimestampMixin
 from app.models.enums.approval_status import ApprovalStatus
 from app.models.enums.user_designation import UserDesignation
-from app.models.users_hierarchy import District,Block,GramPanchayat
+from app.models.users_hierarchy import District, Block, GramPanchayat
+
 if TYPE_CHECKING:
     from app.models.documents import UserDocument
     from app.models.otp import UserOTP
@@ -49,21 +50,22 @@ class User(Base, TimestampMixin):
         ForeignKey('users.id')
     )
 
-    # Relations
+    documents_uploaded: Mapped[bool] = mapped_column(Boolean, nullable=True, default=False)
+
+    # Relations - Use string references to avoid circular imports
     role: Mapped["Role"] = relationship("Role", back_populates="users")
+    
+    # Use string references for documents to avoid circular imports
     documents: Mapped[List["UserDocument"]] = relationship(
         "UserDocument",
         back_populates="user",
-        foreign_keys=lambda: [UserDocument.__table__.c.user_id]
+        foreign_keys="[UserDocument.user_id]",
+        cascade="all, delete-orphan"
     )
 
     district: Mapped["District"] = relationship("District", back_populates="users")
-
     block: Mapped["Block"] = relationship("Block", back_populates="users")
-
     gram_panchayat: Mapped["GramPanchayat"] = relationship("GramPanchayat", back_populates="users")
-
-    documents_uploaded: Mapped[bool] = mapped_column(Boolean, nullable=True,default=False)
 
     # For now storing OTP's for user as single entry only instead of List of OTPs
     otp: Mapped["UserOTP"] = relationship("UserOTP", back_populates="user", uselist=False)

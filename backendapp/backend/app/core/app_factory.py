@@ -8,8 +8,20 @@ from app.core.http_errors import HttpErrors
 from app.core.api_checks_mw import ApiChecksMW
 from app.core.core_exceptions import UnauthorizedException, InvalidRequestException, \
     NotFoundException, ConflictException, NotAcceptable
-from app.api.routes.v1 import auth, blocks, districts, gram_sevaks, preset, profile, gram_sevaks,document_status
 
+# Import routers
+from app.api.routes.v1 import auth, blocks, districts, gram_sevaks
+from app.api.routes.v1 import  preset, profile, document_status, government_docs
+from app.api.routes.v1 import upload,document_validation
+# Try to import additional routers with error handling
+import importlib
+
+try:
+    users_module = importlib.import_module("app.api.routes.v1.users")
+    users_available = True
+except ImportError as e:
+    print(f"Warning: Could not import users router: {e}")
+    users_available = False
 
 # OAuth2 scheme for Swagger UI
 oauth2_scheme = OAuth2PasswordBearer(
@@ -25,12 +37,13 @@ bearer_scheme = HTTPBearer(
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="GramSevak Seva API",
-description="APIs for GramSevak management with JWT authentication and document status tracking",
-version="1.0.0",
-docs_url="/docs",
-redoc_url="/redoc")
-    # Custom OpenAPI schema with security
+    app = FastAPI(
+        title="GramSevak Seva API",
+        description="APIs for GramSevak management with JWT authentication and document status tracking",
+        version="1.0.0",
+        docs_url="/docs",
+        redoc_url="/redoc"
+    )
 
     # Custom OpenAPI schema with security
     def custom_openapi():
@@ -81,6 +94,7 @@ redoc_url="/redoc")
 
     app.openapi = custom_openapi
 
+    # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:5173"],
@@ -91,7 +105,7 @@ redoc_url="/redoc")
         expose_headers=["*"]
     )
 
-     # Include existing routers
+    # Include routers
     app.include_router(auth.router)
     app.include_router(blocks.router)
     app.include_router(districts.router)
@@ -99,10 +113,17 @@ redoc_url="/redoc")
     app.include_router(preset.router)
     app.include_router(profile.router)
     app.include_router(document_status.router)
+    app.include_router(government_docs.router)
+    app.include_router(upload.router)
+    app.include_router(document_validation.router)
+    # Include users router if available
+    if users_available:
+        app.include_router(users_module.router)
 
     # Add API checks middleware after CORS middleware
     app.add_middleware(ApiChecksMW)
 
+    # Exception handlers
     @app.exception_handler(InvalidRequestException)
     async def invalid_exception_handler(request: Request, e: InvalidRequestException):
         return await HttpErrors.http_400(e)
@@ -123,6 +144,4 @@ redoc_url="/redoc")
     async def conflict_exception_handler(request: Request, e: ConflictException):
         return await HttpErrors.http_409(e)
 
-
-    # You can add middleware, routers, etc. here if needed
     return app

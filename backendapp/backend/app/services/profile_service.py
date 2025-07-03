@@ -6,7 +6,7 @@ import os
 import uuid
 from datetime import datetime
 import json
-
+from app.schemas.document_schema import DocumentCategory
 try:
     import boto3
     from botocore.exceptions import ClientError
@@ -678,3 +678,54 @@ class ProfileService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"File upload failed: {str(e)}"
             )
+# Document categories configuration
+DOCUMENT_CATEGORIES_CONFIG = {
+    DocumentCategory.IDENTITY_PROOF: {
+        "name": "ओळखपत्र",
+        "name_english": "Identity Proof",
+        "description": "Documents to verify your identity",
+        "types": []
+    },
+    DocumentCategory.EDUCATIONAL: {
+        "name": "शैक्षणिक कागदपत्र", 
+        "name_english": "Educational Documents",
+        "description": "Educational qualifications and certificates",
+        "types": []
+    },
+    DocumentCategory.ADDRESS_PROOF: {
+        "name": "पत्ता पुरावा",
+        "name_english": "Address Proof", 
+        "description": "Documents to verify your residential address",
+        "types": []
+    },
+    DocumentCategory.PROFESSIONAL: {
+        "name": "व्यावसायिक कागदपत्र",
+        "name_english": "Professional Documents",
+        "description": "Work and professional certificates", 
+        "types": []
+    },
+    DocumentCategory.CASTE_CATEGORY: {
+        "name": "जातीचा दाखला",
+        "name_english": "Caste Certificate",
+        "description": "Caste and category related documents",
+        "types": []
+    },
+    DocumentCategory.INCOME_PROOF: {
+        "name": "उत्पन्न पुरावा", 
+        "name_english": "Income Proof",
+        "description": "Documents to verify your income",
+        "types": []
+    },
+    DocumentCategory.MEDICAL: {
+        "name": "वैद्यकीय कागदपत्र",
+        "name_english": "Medical Documents", 
+        "description": "Health and medical certificates",
+        "types": []
+    },
+    DocumentCategory.OTHER: {
+        "name": "इतर",
+        "name_english": "Other Documents",
+        "description": "Other miscellaneous documents",
+        "types": []
+    }
+}

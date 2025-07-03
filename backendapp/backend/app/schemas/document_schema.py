@@ -2,7 +2,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from enum import Enum
-
+from app.schemas.base import CamelCaseModel
 class DocumentCategory(str, Enum):
     """Document categories for organizing different types of documents"""
     IDENTITY_PROOF = "identity_proof"
@@ -14,7 +14,7 @@ class DocumentCategory(str, Enum):
     MEDICAL = "medical"
     OTHER = "other"
 
-class DocumentType(BaseModel):
+class DocumentType(CamelCaseModel):
     """Document type model with category support"""
     id: int
     name: str
@@ -25,10 +25,8 @@ class DocumentType(BaseModel):
     max_file_size_mb: int = 5
     allowed_formats: List[str] = ["pdf", "jpg", "jpeg", "png", "doc", "docx"]
     field_definitions: Optional[Dict[str, Any]] = None
-    class Config:
-        from_attributes = True
 
-class DocumentCategoryResponse(BaseModel):
+class DocumentCategoryResponse(CamelCaseModel):
     """Response model for document categories with their types"""
     category: DocumentCategory
     category_name: str
@@ -36,6 +34,6 @@ class DocumentCategoryResponse(BaseModel):
     description: Optional[str] = None
     document_types: List[DocumentType] = []
     
-    class Config:
+    class Config(CamelCaseModel.Config):
         from_attributes = True
 

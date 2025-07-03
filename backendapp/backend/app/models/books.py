@@ -1,12 +1,14 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, Index, Boolean, DateTime, Text, Float, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 from app.config import Base
 from app.models.base import TimestampMixin
-from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from app.models.department import Department
+    from app.models.users import User
+
 class Book(Base, TimestampMixin):
     __tablename__ = 'books'
     
@@ -21,7 +23,7 @@ class Book(Base, TimestampMixin):
     
     # Fixed: Use Mapped style and correct datetime function
     filename: Mapped[str] = mapped_column(String(255), unique=True)
-    upload_date: Mapped[datetime] = mapped_column(DateTime, default=func.now())  # Fixed: func.now() instead of DateTime.utcnow
+    upload_date: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     total_pages: Mapped[Optional[int]] = mapped_column(Integer, default=0)
     
     # Add author field for Marathi books
@@ -29,13 +31,25 @@ class Book(Base, TimestampMixin):
     
     # Relationships
     pages = relationship("Page", back_populates="book", cascade="all, delete-orphan")
-    department: Mapped["Department"] = relationship("Department", back_populates="books", lazy="joined")
+    department: Mapped[Optional["Department"]] = relationship("Department", back_populates="books", lazy="joined")
+    
+    # Separate relationships for audit fields
+    created_by_user: Mapped[Optional["User"]] = relationship(
+        "User",
+        foreign_keys=[created_by],
+        post_update=True
+    )
+    updated_by_user: Mapped[Optional["User"]] = relationship(
+        "User",
+        foreign_keys=[updated_by],
+        post_update=True
+    )
     
     # Table arguments
     __table_args__ = (
         Index('ix_books_title', 'title'),
         Index('ix_books_department_id', 'department_id'),
-        Index('ix_books_filename', 'filename'),  # Added index for filename
+        Index('ix_books_filename', 'filename'),
     )
 
 class Page(Base):
