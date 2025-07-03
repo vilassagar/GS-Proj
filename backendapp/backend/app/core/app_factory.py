@@ -12,7 +12,7 @@ from app.core.core_exceptions import UnauthorizedException, InvalidRequestExcept
 # Import routers
 from app.api.routes.v1 import auth, blocks, districts, gram_sevaks
 from app.api.routes.v1 import  preset, profile, document_status, government_docs
-from app.api.routes.v1 import upload,document_validation
+from app.api.routes.v1 import upload,document_validation,enhanced_profile
 # Try to import additional routers with error handling
 import importlib
 
@@ -116,6 +116,8 @@ def create_app() -> FastAPI:
     app.include_router(government_docs.router)
     app.include_router(upload.router)
     app.include_router(document_validation.router)
+    app.include_router(enhanced_profile.router)
+
     # Include users router if available
     if users_available:
         app.include_router(users_module.router)

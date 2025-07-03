@@ -7,4 +7,5 @@ from  app.api.routes.v1 import gram_sevaks
 from  app.api.routes.v1 import preset
 from  app.api.routes.v1 import profile
 from  app.api.routes.v1 import upload
+from app.api.routes.v1 import enhanced_profile
 
