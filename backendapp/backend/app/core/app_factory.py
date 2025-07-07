@@ -1,6 +1,19 @@
-## app/core/app_factory.py
+﻿## app/core/app_factory.py
 
 from fastapi import FastAPI, Request
+#Rate Limiter Middelware 
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+#end of rate_limit 
+from starlette.middleware.base import BaseHTTPMiddleware
+import time
+import logging
+
+from fastapi_cache2 import FastAPICache
+from fastapi_cache2.backends.redis import RedisBackend
+import redis.asyncio as redis
+
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.openapi.utils import get_openapi
@@ -35,6 +48,24 @@ bearer_scheme = HTTPBearer(
     description="Enter your JWT token"
 )
 
+# Configure basic logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+class LoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        start_time = time.time()
+        
+        # Log incoming request
+        logger.info(f"➡️ {request.method} {request.url.path}")
+        
+        response = await call_next(request)
+        
+        process_time = round((time.time() - start_time) * 1000, 2)
+        
+        # Log response status and duration
+        logger.info(f"⬅️ {request.method} {request.url.path} - {response.status_code} ({process_time} ms)")
+        
+        return response
 
 def create_app() -> FastAPI:
     app = FastAPI(
@@ -44,7 +75,12 @@ def create_app() -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc"
     )
-
+    # Initialize Limiter
+    limiter = Limiter(key_func=get_remote_address)
+    app.state.limiter = limiter
+    app.add_middleware(LoggingMiddleware)
+    # Add exception handler
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     # Custom OpenAPI schema with security
     def custom_openapi():
         if app.openapi_schema:

@@ -203,3 +203,4 @@ Backend/alembic/versions/33192eceb1e9_new_initial_migration.py
 /.vs
 *.user
 /backendapp/.vs
+/backendapp/backend/obj/Any CPU/Debug
