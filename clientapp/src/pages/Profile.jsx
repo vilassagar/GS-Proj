@@ -18,6 +18,7 @@ import {
 } from "@/services/preset";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import DocumentUpload from "./DocumentUpload";
 
 const DocumentUploadSection = ({ doc }) => {
   const [file, setFile] = useState(null);
@@ -321,10 +322,11 @@ function Profile() {
         </TabsContent>
         <TabsContent value="documents">
           <Card>
-            <CardContent className=" pt-6 md:grid grid-cols-2 gap-4">
-              {documentMasterList.map((doc) => (
+            <CardContent className=" pt-6 gap-4">
+              {/* {documentMasterList.map((doc) => (
                 <DocumentUploadSection key={doc.id} doc={doc} />
-              ))}
+              ))} */}
+              <DocumentUpload />
             </CardContent>
           </Card>
         </TabsContent>

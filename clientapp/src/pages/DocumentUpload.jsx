@@ -12,9 +12,17 @@ import {
   Heart,
   Award,
 } from "lucide-react";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import { cn } from "@/lib/utils";
 
 const DocumentUpload = () => {
   const [documentTypes, setDocumentTypes] = useState([]);
+  const [activeCategory, setActiveCategory] = useState(null);
   const [selectedDocType, setSelectedDocType] = useState(null);
   const [fieldValues, setFieldValues] = useState({});
   const [validationResult, setValidationResult] = useState(null);
@@ -138,6 +146,7 @@ const DocumentUpload = () => {
           },
         },
       },
+
       // THREE NEW DOCUMENT TYPES
       {
         documentTypeId: 4,
@@ -518,178 +527,223 @@ const DocumentUpload = () => {
           Select Document Type
         </h3>
 
-        {Object.entries(groupedDocuments).map(([category, docs]) => (
-          <div key={category} className="mb-6">
-            <h4 className="text-lg font-medium text-gray-600 mb-3 flex items-center">
-              {categoryIcons[category]}
-              <span className="ml-2">{categoryLabels[category]}</span>
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {docs.map((docType) => (
-                <div
-                  key={docType.documentTypeId}
-                  onClick={() => {
-                    setSelectedDocType(docType);
-                    setFieldValues({});
-                    setValidationResult(null);
-                  }}
-                  className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
-                    selectedDocType?.documentTypeId === docType.documentTypeId
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-gray-800">
-                      {docType.nameEnglish}
-                    </span>
-                    {docType.isMandatory && (
-                      <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
-                        Required
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600">{docType.name}</p>
-                </div>
-              ))}
+        <div className="">
+          <div className="w-full overflow-y-auto pr-4">
+            <div className="flex-col gap-6 ">
+              <Accordion
+                type="single"
+                collapsible
+                value={activeCategory}
+                onValueChange={(newCategory) => {
+                  setActiveCategory(newCategory);
+                  setSelectedDocType(null); // Reset selected doc when switching category
+                  setFieldValues({});
+                  setValidationResult(null);
+                  setSelectedFile(null);
+                }}
+                className="w-full space-y-4"
+              >
+                {Object.entries(groupedDocuments).map(([category, docs]) => (
+                  <AccordionItem key={category} value={category}>
+                    <AccordionTrigger className=" bg-slate-100 rounded-md gap-4">
+                      <div className="flex items-center gap-2 ">
+                        {categoryIcons[category]}
+                        <span>{categoryLabels[category]}</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="flex flex-wrap gap-4">
+                        {docs.map((docType) => (
+                          <div
+                            key={docType.documentTypeId}
+                            onClick={() => {
+                              setSelectedDocType({ ...docType, category });
+                              setFieldValues({});
+                              setValidationResult(null);
+                            }}
+                            className={cn(
+                              "p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md",
+                              selectedDocType?.documentTypeId ===
+                                docType.documentTypeId
+                                ? "border-blue-500 bg-blue-50"
+                                : "border-gray-200 hover:border-gray-300"
+                            )}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-gray-800">
+                                {docType.nameEnglish}
+                              </span>
+                              {docType.isMandatory && (
+                                <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded">
+                                  Required
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600">
+                              {docType.name}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Document Details Form */}
+                      {selectedDocType &&
+                      activeCategory === category &&
+                      selectedDocType.category === category ? (
+                        <div className="border-t pt-6 w-full overflow-y-auto pr-4">
+                          <h3 className="text-xl font-semibold text-gray-700 mb-4">
+                            {selectedDocType.nameEnglish} Details
+                          </h3>
+
+                          <div className="bg-blue-50 p-4 rounded-lg mb-6">
+                            <div className="flex items-start">
+                              <AlertCircle className="w-5 h-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+                              <p className="text-sm text-blue-800">
+                                {selectedDocType.instructions}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Field Inputs */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            {Object.entries(
+                              selectedDocType.fieldDefinitions
+                            ).map(([fieldName, fieldDef]) =>
+                              renderField(fieldName, fieldDef)
+                            )}
+                          </div>
+
+                          {/* File Upload */}
+                          <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Upload Document File
+                            </label>
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                              <input
+                                type="file"
+                                onChange={(e) =>
+                                  setSelectedFile(e.target.files[0])
+                                }
+                                className="hidden"
+                                id="file-upload"
+                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                              />
+                              <label
+                                htmlFor="file-upload"
+                                className="cursor-pointer"
+                              >
+                                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                <p className="text-sm text-gray-600">
+                                  {selectedFile
+                                    ? selectedFile.name
+                                    : "Click to upload or drag and drop"}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  PDF, JPG, PNG, DOC, DOCX (Max 5MB)
+                                </p>
+                              </label>
+                            </div>
+                          </div>
+
+                          {/* Validation Results */}
+                          {validationResult && (
+                            <div
+                              className={`p-4 rounded-lg mb-6 ${
+                                validationResult.valid
+                                  ? "bg-green-50 border border-green-200"
+                                  : "bg-red-50 border border-red-200"
+                              }`}
+                            >
+                              <div className="flex items-center mb-2">
+                                {validationResult.valid ? (
+                                  <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                                ) : (
+                                  <XCircle className="w-5 h-5 text-red-600 mr-2" />
+                                )}
+                                <span
+                                  className={`font-medium ${
+                                    validationResult.valid
+                                      ? "text-green-800"
+                                      : "text-red-800"
+                                  }`}
+                                >
+                                  {validationResult.valid
+                                    ? "All fields are valid!"
+                                    : "Please fix the following errors:"}
+                                </span>
+                              </div>
+                              {!validationResult.valid && (
+                                <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
+                                  {validationResult.errors.map((error, idx) => (
+                                    <li key={idx}>{error}</li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-4">
+                            <button
+                              onClick={validateFields}
+                              disabled={isValidating}
+                              className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                            >
+                              {isValidating ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                  Validating...
+                                </>
+                              ) : (
+                                "Validate Fields"
+                              )}
+                            </button>
+
+                            <button
+                              onClick={handleUpload}
+                              disabled={
+                                !validationResult?.valid ||
+                                !selectedFile ||
+                                isUploading
+                              }
+                              className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                            >
+                              {isUploading ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                  Uploading...
+                                </>
+                              ) : (
+                                "Upload Document"
+                              )}
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setSelectedDocType(null);
+                                setFieldValues({});
+                                setValidationResult(null);
+                                setSelectedFile(null);
+                              }}
+                              className="px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                            >
+                              Clear Form
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        // <div className="h-10 w-10 border-blue-950 text-center">
+                        " No Document Selcetd"
+                        // </div>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Document Details Form */}
-      {selectedDocType && (
-        <div className="border-t pt-6">
-          <h3 className="text-xl font-semibold text-gray-700 mb-4">
-            {selectedDocType.nameEnglish} Details
-          </h3>
-
-          <div className="bg-blue-50 p-4 rounded-lg mb-6">
-            <div className="flex items-start">
-              <AlertCircle className="w-5 h-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-blue-800">
-                {selectedDocType.instructions}
-              </p>
-            </div>
-          </div>
-
-          {/* Field Inputs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {Object.entries(selectedDocType.fieldDefinitions).map(
-              ([fieldName, fieldDef]) => renderField(fieldName, fieldDef)
-            )}
-          </div>
-
-          {/* File Upload */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Upload Document File
-            </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-              <input
-                type="file"
-                onChange={(e) => setSelectedFile(e.target.files[0])}
-                className="hidden"
-                id="file-upload"
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-              />
-              <label htmlFor="file-upload" className="cursor-pointer">
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">
-                  {selectedFile
-                    ? selectedFile.name
-                    : "Click to upload or drag and drop"}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  PDF, JPG, PNG, DOC, DOCX (Max 5MB)
-                </p>
-              </label>
-            </div>
-          </div>
-
-          {/* Validation Results */}
-          {validationResult && (
-            <div
-              className={`p-4 rounded-lg mb-6 ${
-                validationResult.valid
-                  ? "bg-green-50 border border-green-200"
-                  : "bg-red-50 border border-red-200"
-              }`}
-            >
-              <div className="flex items-center mb-2">
-                {validationResult.valid ? (
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                ) : (
-                  <XCircle className="w-5 h-5 text-red-600 mr-2" />
-                )}
-                <span
-                  className={`font-medium ${
-                    validationResult.valid ? "text-green-800" : "text-red-800"
-                  }`}
-                >
-                  {validationResult.valid
-                    ? "All fields are valid!"
-                    : "Please fix the following errors:"}
-                </span>
-              </div>
-              {!validationResult.valid && (
-                <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
-                  {validationResult.errors.map((error, idx) => (
-                    <li key={idx}>{error}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex gap-4">
-            <button
-              onClick={validateFields}
-              disabled={isValidating}
-              className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-            >
-              {isValidating ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Validating...
-                </>
-              ) : (
-                "Validate Fields"
-              )}
-            </button>
-
-            <button
-              onClick={handleUpload}
-              disabled={
-                !validationResult?.valid || !selectedFile || isUploading
-              }
-              className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-            >
-              {isUploading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Uploading...
-                </>
-              ) : (
-                "Upload Document"
-              )}
-            </button>
-
-            <button
-              onClick={() => {
-                setSelectedDocType(null);
-                setFieldValues({});
-                setValidationResult(null);
-                setSelectedFile(null);
-              }}
-              className="px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-            >
-              Clear Form
-            </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
