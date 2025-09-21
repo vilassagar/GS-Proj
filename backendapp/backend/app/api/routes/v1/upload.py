@@ -6,7 +6,6 @@ import shutil  # ✅ Added missing import
 
 from app.config import get_db
 from app.services.ocr_service import MarathiOCRService
-from app.services.search_service import SearchService
 from app.models.enums.vx_api_perms_enum import VxAPIPermsEnum
 from app.services.document_service import DocumentTypeService
 from app.utils.vx_api_perms_utils import VxAPIPermsUtils
@@ -93,62 +92,6 @@ async def upload_book(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
 
-@router.get("/search/exact")
-async def exact_search(
-    query: str,
-    book_id: Optional[int] = None,
-    db: Session = Depends(get_db)
-):
-    """Exact text search"""
-    search_service = SearchService(db)
-    results = search_service.exact_search(query, book_id)
-    return {"results": results, "count": len(results)}
-
-@router.get("/search/fuzzy")
-async def fuzzy_search(
-    query: str,
-    book_id: Optional[int] = None,
-    threshold: float = 0.7,
-    db: Session = Depends(get_db)
-):
-    """Fuzzy/approximate search"""
-    search_service = SearchService(db)
-    results = search_service.fuzzy_search(query, book_id, threshold)
-    return {"results": results, "count": len(results)}
-
-@router.get("/search/phrase")
-async def phrase_search(
-    phrase: str,
-    book_id: Optional[int] = None,
-    db: Session = Depends(get_db)
-):
-    """Phrase search"""
-    search_service = SearchService(db)
-    results = search_service.phrase_search(phrase, book_id)
-    return {"results": results, "count": len(results)}
-
-@router.get("/search/positional")
-async def positional_search(
-    query: str,
-    book_id: Optional[int] = None,
-    db: Session = Depends(get_db)
-):
-    """Positional search"""
-    search_service = SearchService(db)
-    results = search_service.positional_search(query, book_id)
-    return {"results": results, "count": len(results)}
-
-@router.get("/search/semantic")
-async def semantic_search(
-    query: str,
-    book_id: Optional[int] = None,
-    top_k: int = 10,
-    db: Session = Depends(get_db)
-):
-    """Semantic search"""
-    search_service = SearchService(db)
-    results = search_service.semantic_search(query, book_id, top_k)
-    return {"results": results, "count": len(results)}
 
 @router.get("/books")
 async def get_books(db: Session = Depends(get_db)):

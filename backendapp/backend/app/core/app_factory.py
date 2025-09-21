@@ -10,10 +10,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 import time
 import logging
 
-from fastapi_cache2 import FastAPICache
-from fastapi_cache2.backends.redis import RedisBackend
-import redis.asyncio as redis
-
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.openapi.utils import get_openapi
@@ -25,7 +21,7 @@ from app.core.core_exceptions import UnauthorizedException, InvalidRequestExcept
 # Import routers
 from app.api.routes.v1 import auth, blocks, districts, gram_sevaks
 from app.api.routes.v1 import  preset, profile, document_status, government_docs
-from app.api.routes.v1 import upload,document_validation,enhanced_profile
+from app.api.routes.v1 import upload,document_validation,enhanced_profile,health
 # Try to import additional routers with error handling
 import importlib
 
@@ -51,6 +47,7 @@ bearer_scheme = HTTPBearer(
 # Configure basic logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
@@ -75,12 +72,15 @@ def create_app() -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc"
     )
+    
     # Initialize Limiter
     limiter = Limiter(key_func=get_remote_address)
     app.state.limiter = limiter
     app.add_middleware(LoggingMiddleware)
+    
     # Add exception handler
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    
     # Custom OpenAPI schema with security
     def custom_openapi():
         if app.openapi_schema:
@@ -153,6 +153,7 @@ def create_app() -> FastAPI:
     app.include_router(upload.router)
     app.include_router(document_validation.router)
     app.include_router(enhanced_profile.router)
+    app.include_router(health.router)  # ADD THIS LINE
 
     # Include users router if available
     if users_available:

@@ -1,8 +1,7 @@
 from copy import deepcopy
 from datetime import timedelta, datetime, timezone
 
-from jwt import encode, decode, ExpiredSignatureError, DecodeError, InvalidTokenError
-
+import jwt
 from app.config import settings
 from app.core.core_exceptions import UnauthorizedException
 
@@ -10,12 +9,9 @@ from app.core.core_exceptions import UnauthorizedException
 JWT_SECRET = settings.jwt_secret_key
 JWT_ALGO = settings.jwt_algorithm
 
-
-
 class JWTError(Exception):
     """Custom JWT Error that properly inherits from Exception"""
     pass
-
 
 class VxJWTUtils:
 
@@ -37,7 +33,7 @@ class VxJWTUtils:
 
         to_encode.update({"exp": expiry_in})  
 
-        encoded_jwt = encode(payload=to_encode, key=JWT_SECRET, algorithm=JWT_ALGO)
+        encoded_jwt = jwt.encode(payload=to_encode, key=JWT_SECRET, algorithm=JWT_ALGO)
         return encoded_jwt
 
     @staticmethod
@@ -49,14 +45,14 @@ class VxJWTUtils:
         try:
             print("\n In Verify access token: \n")
             print("\n In Verify access token: \n")
-            payload = decode(jwt=token, key=JWT_SECRET, algorithms=[JWT_ALGO])
+            payload = jwt.decode(jwt=token, key=JWT_SECRET, algorithms=[JWT_ALGO])
             return payload
-        except ExpiredSignatureError:
+        except jwt.ExpiredSignatureError:
             raise UnauthorizedException("JWT Token has expired")
-
-        except (DecodeError, InvalidTokenError) as e:
+        except jwt.DecodeError:
             raise UnauthorizedException("Invalid or Malformed token")
-        
+        except jwt.InvalidTokenError:
+            raise UnauthorizedException("Invalid or Malformed token")
         except Exception as e:
             print(f"Unexpected JWT error: {e}")
             raise UnauthorizedException("Token verification failed")
