@@ -5,7 +5,7 @@ import Dashboard from "@/pages/Dashboard";
 import MyDashboard from "@/pages/MyDashboard";
 
 import DistrictAdmins from "@/pages/DistrictAdmins";
-import DocumentUpload from "@/pages/DocumentUpload";
+import DocumentUpload from "@/pages/DocumentUpload_";
 import GramSevaks from "@/pages/GramSevaks";
 import LandingPage from "@/pages/LandingPage";
 import Login from "@/pages/Login";

@@ -43,7 +43,7 @@ class DistrictService:
                 district_name=district.district_name,
                 admin=(
                     None if not admins else
-                    DistrictAdminResponseSchema.admin.__annotations__['__class__'](
+                        DistrictAdminResponseSchema.admin.__annotations__['__class__'](
                         user_id=admins[0].id,
                         user_name=f"{admins[0].first_name} {admins[0].last_name}"
                     )

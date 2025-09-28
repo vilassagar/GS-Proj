@@ -115,8 +115,17 @@ class AuthService:
 
     @staticmethod
     def register_user(user_data: UserRegisterRequest, db: Session):
+        # Ensure sequence is synced before creating a new user
+        UserDal.ensure_sequence_is_synced(db)
 
         print("User Data: ", user_data.__dict__)
+
+        # Check for duplicate email
+        if UserDal.get_user_by_email(user_data.email, db):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"User with email {user_data.email} already exists"
+            )
 
         if UserDal.get_user_by_mobile_or_whatsapp_number(user_data.mobile_number, db):
             raise HTTPException(

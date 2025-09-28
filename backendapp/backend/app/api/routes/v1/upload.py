@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, Form
+from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, Form, Query
 from sqlalchemy.orm import Session
-from typing import Optional, List
-import os  # ✅ Added missing import
-import shutil  # ✅ Added missing import
+from typing import Optional, List, Dict, Any
+import os
+import shutil
 
 from app.config import get_db
 from app.services.ocr_service import MarathiOCRService
@@ -12,17 +12,40 @@ from app.utils.vx_api_perms_utils import VxAPIPermsUtils
 
 router = APIRouter(
     prefix="/v1/upload",
-    tags=["upload"],  # ✅ Changed from "gramsevak" to "upload" for consistency
+    tags=["upload"],
     responses={404: {"description": "Not Found"}}
 )
 
 ocr_service = MarathiOCRService()
 
+# FIXED: Enhanced getdocumenttype endpoint
 VxAPIPermsUtils.set_perm_get(path=router.prefix + '/getdocumenttype', perm=VxAPIPermsEnum.PUBLIC)
 @router.get("/getdocumenttype")
-async def get_all_document_types(db: Session = Depends(get_db)):
-    return DocumentTypeService.get_all_document_types(db=db)
+async def get_all_document_types(
+    category: Optional[str] = Query(None, description="Filter by category (identity_proof, educational, etc.)"),
+    is_mandatory: Optional[bool] = Query(None, description="Filter by mandatory status"),
+    include_field_definitions: bool = Query(True, description="Include field definitions in response"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get all document types with comprehensive information
+    
+    Query Parameters:
+    - category: Filter by document category
+    - is_mandatory: Filter by mandatory status (true/false)
+    - include_field_definitions: Include field definitions (default: true)
+    """
+    try:
+        return DocumentTypeService.get_all_document_types_enhanced(
+            db=db,
+            category=category,
+            is_mandatory=is_mandatory,
+            include_field_definitions=include_field_definitions
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving document types: {str(e)}")
 
+# Keep existing endpoints...
 @router.post("/upload-book/")
 async def upload_book(
     file: UploadFile = File(...),
@@ -46,7 +69,7 @@ async def upload_book(
         extracted_data = ocr_service.extract_text_from_pdf(file_path)
         
         # Save to database
-        from app.models.books import Book, Page, Word  # ✅ Fixed import
+        from app.models.books import Book, Page, Word
         
         book = Book(
             title=title,
@@ -96,7 +119,7 @@ async def upload_book(
 @router.get("/books")
 async def get_books(db: Session = Depends(get_db)):
     """Get all books"""
-    from app.models.books import Book  # ✅ Fixed import
+    from app.models.books import Book
     books = db.query(Book).all()
     return [
         {

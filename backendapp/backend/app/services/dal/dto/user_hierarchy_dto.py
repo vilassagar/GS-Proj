@@ -93,7 +93,9 @@ class GramPanchayatDTO(ToCamel):
         # self.updated_by = updated_by
 
     @staticmethod
-    def to_dto(gp: GramPanchayat) -> "GramPanchayatDTO":
+    def to_dto(gp: GramPanchayat) -> Optional["GramPanchayatDTO"]:
+        if gp is None:
+            return None
         return GramPanchayatDTO(
             id=gp.id,
             name=gp.name,
@@ -101,6 +103,4 @@ class GramPanchayatDTO(ToCamel):
             created_at=gp.created_at,
             updated_at=gp.updated_at,
             is_active=gp.is_active,
-            # created_by=gp.created_by,
-            # updated_by=gp.updated_by
         )

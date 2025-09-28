@@ -37,31 +37,50 @@ class DocumentTypeDal:
         return DocumentTypeDTO.to_dto(doc_type) if doc_type else None
 
     @staticmethod
-    def get_all_document_types(db: Session) -> List[DocumentTypeDTO]:
-        """Get all active document types with proper category and instructions"""
-        print("🔍 Fetching all document types from database...")
+    @staticmethod
+    def get_all_document_types(db: Session) -> List:
+        """FIXED: Get all active document types with proper error handling"""
+        print("🔍 DocumentTypeDal: Fetching all document types...")
         
-        doc_types = db.query(DocumentType).filter(
-            DocumentType.is_active == True
-        ).order_by(DocumentType.id).all()
-        
-        print(f"📊 Found {len(doc_types)} document types in database")
-        
-        # Convert to DTOs and debug first few
-        dtos = []
-        for i, dt in enumerate(doc_types):
-            dto = DocumentTypeDTO.to_dto(dt)
-            dtos.append(dto)
+        try:
+            from app.models.documents import DocumentType
             
-            # Debug first 3 documents
-            if i < 3:
-                print(f"📄 Document {i+1}: {dt.name_english}")
-                print(f"   Category in DB: '{dt.category}' -> DTO: '{dto.category}'")
-                print(f"   Instructions in DB: '{dt.instructions}' -> DTO: '{dto.instructions}'")
-                print(f"   Is Mandatory: {dt.is_mandatory} -> DTO: {dto.is_mandatory}")
-                print(f"   field_definitions: {dt.field_definitions} -> DTO: {dto.field_definitions}")
-        
-        return dtos
+            # Query with explicit filtering and ordering
+            doc_types = db.query(DocumentType).filter(
+                DocumentType.is_active == True
+            ).order_by(DocumentType.id).all()
+            
+            print(f"📊 Raw query returned {len(doc_types)} document types")
+            
+            # Convert to DTOs
+            from app.services.dal.dto.document_dto import DocumentTypeDTO
+            dtos = []
+            
+            for i, dt in enumerate(doc_types):
+                try:
+                    dto = DocumentTypeDTO.to_dto(dt)
+                    dtos.append(dto)
+                    
+                    # Debug first few
+                    if i < 3:
+                        print(f"📄 Document {i+1}: {dt.name_english}")
+                        print(f"   Category: '{dt.category}'")
+                        print(f"   Is Mandatory: {dt.is_mandatory}")
+                        print(f"   Field Definitions: {bool(dt.field_definitions)}")
+                        
+                except Exception as dto_error:
+                    print(f"⚠️  Error converting document type {dt.id} to DTO: {dto_error}")
+                    continue
+            
+            print(f"✅ Successfully converted {len(dtos)} documents to DTOs")
+            return dtos
+            
+        except Exception as e:
+            print(f"❌ Error in DocumentTypeDal.get_all_document_types: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+
     
     @staticmethod
     def get_document_types_by_category(db: Session, category: str) -> List[DocumentTypeDTO]:

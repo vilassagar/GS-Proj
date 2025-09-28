@@ -1,6 +1,6 @@
 from typing import Optional, List
 
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, text
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.enums.approval_status import ApprovalStatus, ApprovalStatusRequest
@@ -102,6 +102,9 @@ class UserDal:
                     designation: UserDesignation, district_id: int, block_id: int,
                     status: ApprovalStatus, role_id: Optional[int] = 4):
 
+        # Ensure sequence is synced before creating a new user
+        UserDal.ensure_sequence_is_synced(db)
+
         new_user = User(
             first_name=first_name,
             last_name=last_name,
@@ -114,7 +117,6 @@ class UserDal:
             gram_panchayat_id=gram_panchayat_id,
             status=status,
             role_id=role_id
-
         )
         db.add(new_user)
         db.commit()
@@ -280,3 +282,41 @@ class UserDal:
         user.role_id = 4
         db.commit()
         db.refresh(user)
+
+    @staticmethod
+    def get_user_by_email(email: str, db: Session) -> Optional[UserDTO]:
+        user = db.query(User).filter(
+            User.is_active,
+            User.email == email
+        ).first()
+        if user:
+            return UserDTO.to_dto(user)
+        return None
+    
+    @staticmethod
+    def get_max_id(db: Session):
+        result = db.execute(text("SELECT MAX(id) AS max_id FROM users"))
+        max_id = result.scalar()
+        return max_id if max_id is not None else 0
+
+    @staticmethod
+    def get_last_sequence_value(db: Session):
+        result = db.execute(text("SELECT last_value, is_called FROM users_id_seq"))
+        return result.fetchone()
+
+    @staticmethod
+    def reset_sequence_to_maximum(db: Session):
+        db.execute(text("SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));"))
+        db.commit()
+
+    @staticmethod
+    def ensure_sequence_is_synced(db: Session):
+        # Get the current max id in the users table
+        max_id = UserDal.get_max_id(db)
+        # Get the current sequence value
+        seq_row = UserDal.get_last_sequence_value(db)
+        if seq_row:
+            last_value, is_called = seq_row
+            # If the sequence is behind, reset it
+            if last_value < max_id:
+                UserDal.reset_sequence_to_maximum(db)
