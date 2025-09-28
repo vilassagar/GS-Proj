@@ -1,17 +1,22 @@
 # main.py
 # This file serves as the entry point for the FastAPI application.
 from fastapi import FastAPI
-from app.core.app_factory import create_app  # Fixed import path
+from app.core.app_factory import create_app
 from app.models.enums.vx_api_perms_enum import VxAPIPermsEnum
 from app.utils.vx_api_perms_utils import VxAPIPermsUtils
 from fastapi.responses import JSONResponse
-from app.api.routes.v1 import health
+from app.api.routes.v1.health import router as health_router
 import logging
 import os
+
 app = create_app()
+
+# Include the health router
+app.include_router(health_router, prefix="/api/v1", tags=["health"])
 
 # Explicitly set root route as public
 VxAPIPermsUtils.set_perm_get(path='/', perm=VxAPIPermsEnum.PUBLIC)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
