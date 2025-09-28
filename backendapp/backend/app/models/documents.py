@@ -26,6 +26,8 @@ class DocumentType(Base, TimestampMixin):
     
     # Category for grouping similar documents
     category: Mapped[Optional[str]] = mapped_column(String(100))  # e.g., 'EDUCATION', 'IDENTITY', 'SERVICE'
+    # Category for grouping similar documents
+    category_marathi: Mapped[Optional[str]] = mapped_column(String(100))  # e.g., 'EDUCATION', 'IDENTITY', 'SERVICE'
     
     # Instructions for the user
     instructions: Mapped[Optional[str]] = mapped_column(Text)
