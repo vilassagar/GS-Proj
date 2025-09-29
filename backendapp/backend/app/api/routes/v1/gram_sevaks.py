@@ -1,4 +1,5 @@
 from typing import Optional
+import re
 
 from fastapi import APIRouter, Depends, Query, status, Request
 from sqlalchemy.orm import Session
@@ -81,16 +82,17 @@ async def upload_gramsevak_documents(
         print(f"Key: {key}, Value Type: {type(value)}")
 
     document_map = dict()
+    metadata_map = dict()
     for key, value in form_items:
-        try:
+        if key.isdigit():
             doc_id = int(key)
-            print("value type: ", value)
-
-            # if isinstance(value, UploadFile):
-
             document_map[doc_id] = value
-        except ValueError:
-            raise InvalidRequestException(f"Invalid document ID format: {key}")
+        elif re.match(r'^\d+_', key):
+            doc_id = int(key.split("_")[0])
+            metadata_map.setdefault(doc_id, {})[key] = value
+        else:
+            # Optionally log or skip invalid keys
+            continue
 
     if not document_map:
         raise InvalidRequestException("No valid document data received.")

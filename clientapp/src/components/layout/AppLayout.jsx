@@ -52,8 +52,9 @@ export default function AppLayout({ children }) {
 
   const handleLogout = () => {
     sessionStorage.clear();
+    localStorage.clear();
     removeUser();
-    navigate("/land");
+    navigate("/login");
   };
 
   const MenuItem = ({ icon: Icon, text, onClick, permission, path }) => {
@@ -175,7 +176,12 @@ export default function AppLayout({ children }) {
           <header className="hidden md:flex h-14 items-center justify-end border-b bg-slate-800 text-white px-4">
             <div className="flex items-center gap-4">
               {user?.firstName && (
-                <span className="font-medium">Hello, {user.firstName}</span>
+                <span className="text-sm">
+                  नमस्कार,{" "}
+                  <span className="font-semibold">
+                    {user.firstName} {user.lastName}
+                  </span>
+                </span>
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

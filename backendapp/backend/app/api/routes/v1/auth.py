@@ -36,7 +36,9 @@ async def login(login_info: LoginRequestSchema, db: Session = Depends(get_db)):
     if user_with_details is None:
         return {"message": "User not found or invalid OTP"}, 404
 
-    return {"message: ": "Logged in Successfully",
+    return {"message: ": "Logged in Successfully",           
+            "firstName": user_with_details.first_name,
+            "lastName": user_with_details.last_name,
             "userId": user_with_details.id,
             "accessToken": access_token,
             "roleId": user_with_details.role.id if user_with_details.role else None,

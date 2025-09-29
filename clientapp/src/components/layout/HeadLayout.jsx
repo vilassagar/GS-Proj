@@ -41,6 +41,7 @@ export default function HeadLayout({ children }) {
 
   const handleLogout = () => {
     sessionStorage.clear();
+    localStorage.clear();
     removeUser();
     navigate("/login");
   };

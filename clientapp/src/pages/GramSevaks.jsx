@@ -18,192 +18,351 @@ import {
   getGramSevakById,
   getgramsevakList,
 } from "@/services/gramsevak";
-import { CheckIcon, CrossIcon, EyeIcon, Search, X } from "lucide-react";
+import { CheckIcon, EyeIcon, Search, X } from "lucide-react";
 import WithAuthentication from "@/components/hoc/withAuthentication";
 import WithPermission from "@/components/hoc/withPermissions";
 import toast from "react-hot-toast";
 import { userStore } from "@/lib/store";
 
-function GramSevakTable({ data, onEdit, onApprove }) {
-  const [editingGramSevak, setEditingGramSevak] = useState(null);
-  const [currentGramSevak, setCurrentGramSevak] = useState(null);
-  const user = userStore((state) => state.user);
-
-  const handleEditSubmit = (e) => {
-    e.preventDefault();
-    if (editingGramSevak) {
-      onEdit(editingGramSevak.id, editingGramSevak);
-      setEditingGramSevak(null);
-    }
-  };
-
-  const handleApprove = (index, status) => async (e) => {
-    let gramSevak = data[index];
-    let payload = {
-      gramsevakId: gramSevak.id,
-      status: status,
-    };
-
-    onApprove(payload);
-  };
-
-  const handleViewGramsevak = (index) => async (e) => {
-    let gramsevakId = data[index]?.id;
-
-    let response = await getGramSevakById(gramsevakId);
-    if (response?.status === "success") {
-      setCurrentGramSevak(response?.data);
-    } else {
-      toast.error("ग्रामसेवकाची माहिती मिळू शकली नाही");
-    }
-  };
-
+function GramSevakTable({ data, onApprove, onView }) {
   return (
-    <div className="border rounded-lg shadow-lg border-0">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>पहिले नाव</TableHead>
-            <TableHead>आडनाव</TableHead>
-            <TableHead>ई-मेल</TableHead>
-            <TableHead>ब्लॉक</TableHead>
-            <TableHead>जिल्हा</TableHead>
-            <TableHead>सेवा आयडी</TableHead>
-            <TableHead>स्थिती</TableHead>
-            <TableHead>क्रिया</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data?.map((gramSevak, index) => (
-            <TableRow key={gramSevak.id}>
-              <TableCell>{gramSevak.firstName}</TableCell>
-              <TableCell>{gramSevak.lastName}</TableCell>
-              <TableCell>{gramSevak.email}</TableCell>
-              <TableCell>{gramSevak.block}</TableCell>
-              <TableCell>{gramSevak.district}</TableCell>
-              <TableCell>{gramSevak.serviceId}</TableCell>
-              <TableCell>
-                {gramSevak.isApproved ? "मंजूर" : "प्रलंबित"}
-              </TableCell>
-              <TableCell>
-                {gramSevak?.isApproved ? null : (
-                  <div className="flex">
-                    <Button
-                      variant="outline"
-                      className="mr-2"
-                      onClick={handleApprove(index, "APPROVED")}
-                    >
-                      <CheckIcon />
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      onClick={handleApprove(index, "REJECTED")}
-                    >
-                      <X />
-                    </Button>
-                  </div>
-                )}
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="mx-5"
-                      onClick={handleViewGramsevak(index)}
-                    >
-                      <EyeIcon />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>वापरकर्ता माहिती</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div>
-                          <h3 className="font-semibold">वैयक्तिक तपशील</h3>
-                          <p>
-                            नाव: {currentGramSevak?.firstName}{" "}
-                            {currentGramSevak?.lastName}
-                          </p>
-                          <p>
-                            पदनाम:{" "}
-                            {currentGramSevak?.designation.designationName}
-                          </p>
-                          <p>मोबाईल: {currentGramSevak?.mobileNumber}</p>
-                          <p>व्हॉट्सअॅप: {currentGramSevak?.whatsappNumber}</p>
-                          <p>ई-मेल: {currentGramSevak?.email}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </DialogContent>
-                </Dialog>
-              </TableCell>
+    <div className="border rounded-lg shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-100">
+              <TableHead className="font-semibold">पहिले</TableHead>
+              <TableHead className="font-semibold">ई-मेल</TableHead>
+              <TableHead className="font-semibold">ग्राम पंचायत</TableHead>
+              <TableHead className="font-semibold">ब्लॉक</TableHead>
+              <TableHead className="font-semibold">जिल्हा</TableHead>
+              <TableHead className="font-semibold">सेवा आयडी</TableHead>
+              <TableHead className="font-semibold">स्थिती</TableHead>
+              <TableHead className="font-semibold text-center">
+                क्रिया
+              </TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {data && data.length > 0 ? (
+              data.map((gramSevak, index) => (
+                <TableRow
+                  key={gramSevak.id || index}
+                  className="hover:bg-slate-50"
+                >
+                  <TableCell className="font-medium">
+                    {gramSevak.firstName || "-"} {gramSevak.lastName || "-"}
+                  </TableCell>
+                  {/* <TableCell>{gramSevak.lastName || "-"}</TableCell> */}
+                  <TableCell>{gramSevak.email || "-"}</TableCell>
+                  <TableCell>{gramSevak.gramPanchayat || "-"}</TableCell>
+                  <TableCell>{gramSevak.block || "-"}</TableCell>
+                  <TableCell>{gramSevak.district || "-"}</TableCell>
+                  <TableCell>{gramSevak.serviceId || "-"}</TableCell>
+                  <TableCell>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        gramSevak.isApproved
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {gramSevak.isApproved ? "मंजूर" : "प्रलंबित"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-center gap-2">
+                      {!gramSevak.isApproved && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => onApprove(index, "APPROVED")}
+                            title="मंजूर करा"
+                          >
+                            <CheckIcon className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => onApprove(index, "REJECTED")}
+                            title="नाकारा"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        onClick={() => onView(index)}
+                        title="तपशील पहा"
+                      >
+                        <EyeIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={8}
+                  className="h-24 text-center text-gray-500"
+                >
+                  कोणतेही परिणाम नाहीत
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
+
 function GramSevaks() {
   const [gramSevaks, setGramSevaks] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusOptions, setStatusOptions] = useState([
+  const [statusValue, setStatusValue] = useState({ id: 1, name: "ALL" });
+  const [loading, setLoading] = useState(true);
+  const [currentGramSevak, setCurrentGramSevak] = useState(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const statusOptions = [
     { id: 1, name: "ALL" },
     { id: 2, name: "APPROVED" },
     { id: 3, name: "PENDING" },
     { id: 4, name: "REJECTED" },
-  ]);
-  const [statusValue, setStatusValue] = useState({ id: 1, name: "ALL" });
+  ];
 
-  useEffect(() => {
-    (async () => {
-      let response = await getgramsevakList(
+  const fetchGramSevaks = async () => {
+    try {
+      setLoading(true);
+      const response = await getgramsevakList(
         searchTerm,
         statusValue?.name || ""
       );
-      setGramSevaks(response?.data);
-    })();
-  }, [statusValue, searchTerm]);
 
-  const handleApprove = async (payload) => {
-    let response = await changeStatus(payload);
-    if (response.status === "success") {
-      setStatusValue({ id: 1, name: "ALL" });
-      toast.success("ग्रामसेवक यशस्वीरित्या मंजूर झाला!");
-    } else {
-      toast.error("अपडेट करू शकत नाही, कृपया पुन्हा प्रयत्न करा.");
+      if (response?.status === "success") {
+        setGramSevaks(response.data || []);
+      } else {
+        toast.error("ग्रामसेवक माहिती मिळू शकली नाही");
+      }
+    } catch (error) {
+      console.error("Error fetching gram sevaks:", error);
+      toast.error("डेटा लोड करताना त्रुटी");
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchGramSevaks();
+  }, [statusValue]);
+
+  const handleSearch = () => {
+    fetchGramSevaks();
+  };
+
+  const handleClear = () => {
+    setSearchTerm("");
+    setStatusValue({ id: 1, name: "ALL" });
+  };
+
+  const handleApprove = async (index, status) => {
+    const gramSevak = gramSevaks[index];
+    const payload = {
+      gramsevakId: gramSevak.id,
+      status: status,
+    };
+
+    try {
+      const response = await changeStatus(payload);
+      if (response.status === "success") {
+        toast.success(
+          status === "APPROVED"
+            ? "ग्रामसेवक यशस्वीरित्या मंजूर झाला!"
+            : "ग्रामसेवक नाकारला"
+        );
+        fetchGramSevaks(); // Refresh the list
+      } else {
+        toast.error("अपडेट करू शकत नाही, कृपया पुन्हा प्रयत्न करा.");
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error("स्थिती अपडेट करताना त्रुटी");
+    }
+  };
+
+  const handleViewGramsevak = async (index) => {
+    const gramsevakId = gramSevaks[index]?.id;
+
+    try {
+      const response = await getGramSevakById(gramsevakId);
+      if (response?.status === "success") {
+        setCurrentGramSevak(response.data);
+        setIsDialogOpen(true);
+      } else {
+        toast.error("ग्रामसेवकाची माहिती मिळू शकली नाही");
+      }
+    } catch (error) {
+      console.error("Error fetching gram sevak details:", error);
+      toast.error("तपशील लोड करताना त्रुटी");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">लोड करत आहे...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-5">ग्रामसेवक व्यवस्थापन</h1>
-      <div className="flex justify-between items-center mb-5">
-        <div className="relative flex-1 mr-10">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-gray-900">
+          ग्रामसेवक व्यवस्थापन
+        </h1>
+        <div className="text-sm text-gray-500">
+          एकूण: {gramSevaks.length} ग्रामसेवक
+        </div>
+      </div>
+
+      {/* Search and Filter Section */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
           <Input
-            placeholder="Search documents..."
+            placeholder="नाव, ई-मेल किंवा जिल्हा शोधा..."
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
           />
         </div>
 
-        <RSelect
-          options={statusOptions}
-          valueProperty="id"
-          nameProperty="name"
-          value={statusValue}
-          onChange={(e) => setStatusValue(e)}
-        />
+        <div className="w-full sm:w-48">
+          <RSelect
+            options={statusOptions}
+            valueProperty="id"
+            nameProperty="name"
+            value={statusValue}
+            onChange={(e) => setStatusValue(e)}
+            placeholder="स्थिती निवडा"
+          />
+        </div>
+
+        <div className="flex gap-2">
+          <Button onClick={handleSearch} className="whitespace-nowrap">
+            शोधा
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleClear}
+            className="whitespace-nowrap"
+          >
+            साफ करा
+          </Button>
+        </div>
       </div>
+
+      {/* Table Section */}
       <GramSevakTable
         data={gramSevaks}
-        onEdit={() => {}}
         onApprove={handleApprove}
+        onView={handleViewGramsevak}
       />
+
+      {/* View Details Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <Card>
+            <CardHeader>
+              <CardTitle>ग्रामसेवक तपशील</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {currentGramSevak ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="font-semibold text-sm text-gray-500">
+                        वैयक्तिक माहिती
+                      </h3>
+                      <div className="mt-2 space-y-2">
+                        <p className="text-sm">
+                          <span className="font-medium">नाव:</span>{" "}
+                          {currentGramSevak.firstName}{" "}
+                          {currentGramSevak.lastName}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">पदनाम:</span>{" "}
+                          {currentGramSevak.designation?.designationName || "-"}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">मोबाईल:</span>{" "}
+                          {currentGramSevak.mobileNumber || "-"}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">व्हॉट्सअॅप:</span>{" "}
+                          {currentGramSevak.whatsappNumber || "-"}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">ई-मेल:</span>{" "}
+                          {currentGramSevak.email || "-"}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-sm text-gray-500">
+                        कार्यक्षेत्र
+                      </h3>
+                      <div className="mt-2 space-y-2">
+                        <p className="text-sm">
+                          <span className="font-medium">जिल्हा:</span>{" "}
+                          {currentGramSevak.district || "-"}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">ब्लॉक:</span>{" "}
+                          {currentGramSevak.block || "-"}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">ग्राम पंचायत:</span>{" "}
+                          {currentGramSevak.gramPanchayat || "-"}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">स्थिती:</span>{" "}
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                              currentGramSevak.isApproved
+                                ? "bg-green-100 text-green-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {currentGramSevak.isApproved ? "मंजूर" : "प्रलंबित"}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="text-center text-gray-500">
+                  माहिती लोड करत आहे...
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

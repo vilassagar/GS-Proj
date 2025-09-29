@@ -100,7 +100,7 @@ class UserDal:
                     mobile_number: str, whatsapp_number: str,
                     gram_panchayat_id: int,
                     designation: UserDesignation, district_id: int, block_id: int,
-                    status: ApprovalStatus, role_id: Optional[int] = 4):
+                    status: ApprovalStatus, role_id: Optional[int] = 2):
 
         # Ensure sequence is synced before creating a new user
         UserDal.ensure_sequence_is_synced(db)
@@ -158,39 +158,34 @@ class UserDal:
         role = RoleDal.get_role_by_name(db, role_name)
         return user.role_id == role.id if role else False
 
-    @staticmethod
-    def get_gramsevaks(
-            db: Session,
-            role_id: int,
-            search_term: Optional[str] = None,
-            status_filter: Optional[ApprovalStatusRequest] = ApprovalStatusRequest.ALL
-    ) -> List[UserDTO]:
+        @staticmethod
+        def get_gramsevaks(
+                db: Session,
+                role_id: int,
+                search_term: Optional[str] = None,
+                status_filter: Optional[ApprovalStatusRequest] = ApprovalStatusRequest.ALL
+        ) -> List[UserDTO]:
 
-        query = db.query(User).filter(
-            User.role_id == role_id,
-            User.is_active
-        )
-
-        if search_term:
-            query = query.filter(
-                or_(
-                    User.first_name.ilike(f"%{search_term}%"),
-                    User.last_name.ilike(f"%{search_term}%"),
-                    User.email.ilike(f"%{search_term}%")
-                )
+            query = db.query(User).filter(
+                User.role_id == role_id,
+                User.is_active == True  # Ensure is_active is checked as a boolean
             )
 
-        if status_filter == ApprovalStatus.APPROVED:
-            query = query.filter(User.status == ApprovalStatus.APPROVED)
+            if search_term:
+                query = query.filter(
+                    or_(
+                        User.first_name.ilike(f"%{search_term}%"),
+                        User.last_name.ilike(f"%{search_term}%"),
+                        User.email.ilike(f"%{search_term}%")
+                    )
+                )
 
-        if status_filter == ApprovalStatus.PENDING:
-            query = query.filter(User.status == ApprovalStatus.APPROVED)
+            # Only filter by status if not ALL
+            if status_filter != ApprovalStatusRequest.ALL:
+                query = query.filter(User.status == status_filter.value)
 
-        if status_filter == ApprovalStatus.REJECTED:
-            query = query.filter(User.status == ApprovalStatus.APPROVED)
-
-        users = query.all()
-        return [UserDTO.to_dto(user) for user in users]
+            users = query.all()
+            return [UserDTO.to_dto(user) for user in users]
 
     @staticmethod
     def get_user_with_details_by_id(db: Session, user_id: int) -> Optional[UserDTO]:
