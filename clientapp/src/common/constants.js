@@ -1,12 +1,21 @@
+// In your constants file
 export const userDesignations = [
-  {
-    designationId: 1,
-    designationName: "ग्राम पंचायत अधिकारी",
-  },
-  {
-    designationId: 2,
-    designationName: "विस्तार अधिकारी",
-  },
+  { designationId: 1, designationName: "ग्राम पंचायत अधिकारी" },
+  { designationId: 2, designationName: "विस्तार अधिकारी" },
+  { designationId: 3, designationName: "ब्लॉक विकास अधिकारी" },
+  { designationId: 4, designationName: "सहायक अभियंता" },
+  { designationId: 5, designationName: "कनिष्ठ अभियंता" },
+  { designationId: 6, designationName: "लेखाकार" },
+  { designationId: 7, designationName: "सहायक लेखाकार" },
+  { designationId: 8, designationName: "डेटा एंट्री ऑपरेटर" },
+  { designationId: 9, designationName: "कार्यालय सहायक" },
+  { designationId: 10, designationName: "मैदान सहायक" },
+  { designationId: 11, designationName: "पर्यवेक्षक" },
+  { designationId: 12, designationName: "समन्वयक" },
+  { designationId: 13, designationName: "परियोजना प्रबंधक" },
+  { designationId: 14, designationName: "प्रशासक" },
+  { designationId: 15, designationName: "निदेशक" },
+  { designationId: 16, designationName: "अन्य" }
 ];
 
 export const docTypeDetails = [

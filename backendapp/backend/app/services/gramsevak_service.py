@@ -1,7 +1,7 @@
 import base64
 import logging
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from botocore.exceptions import ClientError
 from fastapi import HTTPException, UploadFile
@@ -19,13 +19,19 @@ from app.services.dal.user_dal import UserDal
 from app.services.dal.user_hierarchy_dal import DistrictDal, BlockDal, GramPanchayatDal
 
 
-s3_client = boto3.client("s3")
+# Configure S3 client with credentials from settings
+s3_client = boto3.client(
+    "s3",
+    aws_access_key_id=settings.aws_access_key_id,
+    aws_secret_access_key=settings.aws_secret_access_key,
+    region_name=settings.aws_default_region
+)
 bucket_name = settings.aws_s3_bucket
+
 
 
 class GramsevakService:
 
-    
     @staticmethod
     def read_document_content(s3_key: str) -> Optional[str]:
         """
@@ -152,27 +158,58 @@ class GramsevakService:
         return {"message": "Status updated successfully"}
 
     @staticmethod
-    async def upload_gs_docs(db: Session, gramsevak_id: int, documents) -> dict:
+    async def upload_gs_docs(
+        db: Session, 
+        gramsevak_id: int, 
+        documents: Dict[int, UploadFile],
+        metadata: Dict[int, Dict[str, Any]] = None
+    ) -> dict:
+        """
+        Upload documents with their associated metadata
+        
+        Args:
+            db: Database session
+            gramsevak_id: User ID
+            documents: Dict mapping document_type_id to file
+            metadata: Dict mapping document_type_id to field values
+        """
         user = UserDal.get_user_by_id(db, gramsevak_id)
         if not user:
             raise NotFoundException("Requesting User not Found")
 
         uploaded_docs = []
+        metadata = metadata or {}
+        
         for doc_id, file in documents.items():
             try:
+                # Save the file
                 file_path = await GramsevakService.save_file_to_storage(
                     file=file, user_id=gramsevak_id, document_type_id=doc_id
                 )
 
+                # Create the document record
                 user_doc = UserDocumentDal.create_user_document(
                     db=db,
                     user_id=gramsevak_id,
                     document_type_id=doc_id,
-                    file_path=file_path  # Now stores S3 key
+                    file_path=file_path
                 )
+                
+                # If there's metadata for this document, update the field_values
+                if doc_id in metadata and metadata[doc_id]:
+                    # Update the document with field values
+                    UserDocumentDal.update_user_document(
+                        db=db,
+                        document_id=user_doc.id,
+                        update_data={
+                            'field_values': metadata[doc_id]
+                        }
+                    )
+                
                 uploaded_docs.append(user_doc)
 
             except Exception as e:
+                print(f"Error uploading document {doc_id}: {str(e)}")
                 raise HTTPException(
                     status_code=400,
                     detail=f"Failed to upload document {file.filename}: {str(e)}"
@@ -180,8 +217,10 @@ class GramsevakService:
 
         UserDal.set_documents_uploaded_to_true(db=db, user_id=gramsevak_id)
 
-        return {"message": "Documents uploaded successfully"}
-
+        return {
+            "message": "Documents uploaded successfully",
+            "uploaded_count": len(uploaded_docs)
+        }
     
     @staticmethod
     async def save_file_to_storage(file: UploadFile, user_id: int, document_type_id: int) -> str:

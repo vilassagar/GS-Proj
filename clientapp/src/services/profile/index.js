@@ -1,0 +1,1 @@
+export { default as getProfileData } from "./getProfileData";

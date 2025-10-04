@@ -83,7 +83,9 @@ function Login() {
 
     let response = await login(details);
     if (response?.status === "success") {
+      debugger;
       updateUser(response?.data);
+      console.log("Login successful, user data:", response?.data);
       navigate("/");
     } else {
       toast.error("लॉगिन अयशस्वी, कृपया तपासा");
@@ -146,10 +148,12 @@ function Login() {
                 <Input
                   id="otp"
                   name="otp"
+                  type="tel"
                   placeholder="OTP प्रविष्ट करा"
                   disabled={!otpSent}
                   value={loginDetails?.otp}
                   onChange={handleChange("otp")}
+                  maxLength={4}
                 />
               </div>
             </div>

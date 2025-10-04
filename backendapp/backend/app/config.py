@@ -38,19 +38,18 @@ class Settings(BaseSettings):
     # Common Utils vars
     otp_expiry_time: int = 5
 
-    aws_s3_bucket: str = "egramdisha-files"
+    # AWS S3 Configuration - UPDATED SECTION
+    aws_s3_bucket: str = os.getenv("AWS_S3_BUCKET", "gsdoc")
+    aws_access_key_id: str = os.getenv("AWS_ACCESS_KEY_ID", "")
+    aws_secret_access_key: str = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+    aws_default_region: str = os.getenv("AWS_DEFAULT_REGION", "ap-south-1")
 
-    # AWS Configuration (optional fields)
-    aws_access_key_id: Optional[str] = None
-    aws_secret_access_key: Optional[str] = None
-    aws_default_region: Optional[str] = None
-
-    # Application Environment (optional fields)
-    environment: Optional[str] = "development"
-    debug: Optional[bool] = True
+    # Application Environment
+    environment: str = os.getenv("ENVIRONMENT", "development")
+    debug: bool = os.getenv("DEBUG", "True").lower() == "true"
     
     # Development settings
-    bypass_otp: Optional[bool] = True  # Set to False in production
+    bypass_otp: bool = os.getenv("BYPASS_OTP", "True").lower() == "true"
 
     class Config:
         env_file = ".env"

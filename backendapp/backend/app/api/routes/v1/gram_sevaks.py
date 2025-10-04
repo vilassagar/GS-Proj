@@ -73,8 +73,7 @@ async def upload_gramsevak_documents(
     """
     Upload multiple documents where document_id is the key and file is the value.
     """
-    form_data = await request.form()  # Get the form data
-    # Convert form_data items to a list so we can iterate multiple times without loss
+    form_data = await request.form()
     form_items = list(form_data.items())
 
     # Debug: print out the form items
@@ -83,24 +82,37 @@ async def upload_gramsevak_documents(
 
     document_map = dict()
     metadata_map = dict()
+    
     for key, value in form_items:
+        # Check if this is a file upload (pure numeric key)
         if key.isdigit():
             doc_id = int(key)
             document_map[doc_id] = value
-        elif re.match(r'^\d+_', key):
-            doc_id = int(key.split("_")[0])
-            metadata_map.setdefault(doc_id, {})[key] = value
+        # Check if this is metadata (format: "docId_fieldName")
+        elif '_' in key:
+            parts = key.split('_', 1)  # Split only on first underscore
+            if parts[0].isdigit():
+                doc_id = int(parts[0])
+                field_name = parts[1]
+                
+                if doc_id not in metadata_map:
+                    metadata_map[doc_id] = {}
+                
+                metadata_map[doc_id][field_name] = value
         else:
-            # Optionally log or skip invalid keys
+            # Skip invalid keys or log them
+            print(f"Skipping invalid key: {key}")
             continue
 
     if not document_map:
         raise InvalidRequestException("No valid document data received.")
 
+    # Pass both document files and their metadata to the service
     await GramsevakService.upload_gs_docs(
         db=db,
         gramsevak_id=requesting_user.user_id,
-        documents=document_map
+        documents=document_map,
+        metadata=metadata_map  # Add this parameter
     )
 
     return {"message": "Documents uploaded successfully"}

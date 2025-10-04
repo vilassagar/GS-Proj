@@ -1,7 +1,8 @@
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable react/prop-types */
 import WithLayout from "@/components/layout/WithLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { userDesignations } from "@/common/constants";
-import FileUpload from "@/components/common/FileUpload";
 import WithAuthentication from "@/components/hoc/withAuthentication";
 import WithPermission from "@/components/hoc/withPermissions";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,8 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import RSelect from "@/components/ui/RSelect";
 import { userStore } from "@/lib/store";
-import { getGramSevakById } from "@/services/gramsevak";
-import { documentMasterList } from "@/common/constants";
+import { getProfileData } from "@/services/profile";
 import {
   getBlocksByDistrictId,
   getDistricts,
@@ -18,152 +18,9 @@ import {
 } from "@/services/preset";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import DocumentUpload from "./DocumentUpload";
-
-const DocumentUploadSection = ({ doc }) => {
-  const [file, setFile] = useState(null);
-  const [inputFields, setInputFields] = useState({});
-
-  const handleFileChange = (f) => {
-    setFile(f);
-  };
-
-  const handleFieldChange = (name, value) => {
-    setInputFields((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = () => {
-    if (!file) {
-      return toast.error(`कृपया "${doc.marathiName}" साठी फाईल अपलोड करा.`);
-    }
-
-    if (doc.fields) {
-      for (const field of doc.fields) {
-        if (field.required && !inputFields[field.name]) {
-          return toast.error(`कृपया "${field.label}" भरावे.`);
-        }
-      }
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-    doc.fields?.forEach((f) => {
-      formData.append(f.name, inputFields[f.name] || "");
-    });
-    formData.append("documentType", doc.englishName);
-
-    const formPayload = {
-      documentType: doc.englishName,
-      file: {
-        id: 0,
-        name: file?.name || "",
-        file: file || {},
-      },
-    };
-
-    // Add dynamic input fields
-    doc.fields?.forEach((f) => {
-      formPayload[f.name] = inputFields[f.name] || "";
-    });
-
-    // Now log the object
-    console.log("Form Payload:", formPayload, file);
-
-    toast.success(`${doc.marathiName} यशस्वीरित्या सबमिट झाले.`);
-  };
-
-  return (
-    <div className="border rounded-lg p-4 shadow-md bg-white space-y-2">
-      <h2 className="font-bold text-lg text-gray-800">
-        {doc.marathiName}{" "}
-        {doc.required && <span className="text-red-500">*</span>}
-      </h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* File Upload */}
-        <div className="space-y-2">
-          <Label>
-            अपलोड करा {doc.required && <span className="text-red-500">*</span>}
-          </Label>
-          <FileUpload value={file} onChange={handleFileChange} />
-        </div>
-
-        {/* Dynamic Input Fields */}
-        {doc.fields?.map((field) => {
-          return (
-            <div className="space-y-1" key={field.name}>
-              <Label>
-                {field.label}{" "}
-                {field.required && <span className="text-red-500">*</span>}
-              </Label>
-
-              {field.type === "text" && (
-                <Input
-                  placeholder={field.placeholder}
-                  value={inputFields[field.name] || ""}
-                  onChange={(e) =>
-                    handleFieldChange(field.name, e.target.value)
-                  }
-                />
-              )}
-
-              {field.type === "select" && (
-                <select
-                  className="border p-2 rounded w-full"
-                  value={inputFields[field.name] || ""}
-                  onChange={(e) =>
-                    handleFieldChange(field.name, e.target.value)
-                  }
-                >
-                  <option value="">-- निवडा --</option>
-                  {field.options.map((opt, i) => (
-                    <option key={i} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              {field.type === "radio" && (
-                <div className="flex space-x-4">
-                  {field.options.map((opt, i) => (
-                    <label key={i} className="flex items-center space-x-1">
-                      <input
-                        type="radio"
-                        name={field.name}
-                        value={opt}
-                        checked={inputFields[field.name] === opt}
-                        onChange={(e) =>
-                          handleFieldChange(field.name, e.target.value)
-                        }
-                      />
-                      <span>{opt}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="text-right pt-2">
-        <button
-          onClick={handleSubmit}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg"
-        >
-          सबमिट करा
-        </button>
-      </div>
-    </div>
-  );
-};
+import DocumentUpload from "./DocumentUpload_";
 
 function BasicDetails({ data, designations, districts, blocks, panchayats }) {
-  useEffect(() => {
-    (() => {})();
-  }, [data]);
-
   return (
     <Card>
       <CardContent className="space-y-4 pt-6">
@@ -173,9 +30,10 @@ function BasicDetails({ data, designations, districts, blocks, panchayats }) {
             <Input
               id="firstName"
               name="firstName"
-              value={data?.firstName}
+              value={data.basicDetails?.firstName || ""}
               required
               lang="mr"
+              readOnly
             />
           </div>
           <div className="space-y-2">
@@ -183,9 +41,10 @@ function BasicDetails({ data, designations, districts, blocks, panchayats }) {
             <Input
               id="lastName"
               name="lastName"
-              value={data?.lastName}
+              value={data.basicDetails?.lastName || ""}
               required
               lang="mr"
+              readOnly
             />
           </div>
           <div className="space-y-2">
@@ -195,7 +54,10 @@ function BasicDetails({ data, designations, districts, blocks, panchayats }) {
               options={designations}
               nameProperty="designationName"
               valueProperty="designationId"
-              value={data?.designation}
+              value={designations.find(
+                (d) => d.designationName === data.basicDetails?.designation
+              )}
+              disabled
             />
           </div>
           <div className="space-y-2">
@@ -205,7 +67,8 @@ function BasicDetails({ data, designations, districts, blocks, panchayats }) {
               options={districts}
               nameProperty="districtName"
               valueProperty="districtId"
-              value={data?.district}
+              value={data.basicDetails?.district}
+              disabled
             />
           </div>
           <div className="space-y-2">
@@ -215,7 +78,8 @@ function BasicDetails({ data, designations, districts, blocks, panchayats }) {
               options={blocks}
               nameProperty="blockName"
               valueProperty="blockId"
-              value={data?.block}
+              value={data.basicDetails?.block}
+              disabled
             />
           </div>
           <div className="space-y-2">
@@ -227,7 +91,8 @@ function BasicDetails({ data, designations, districts, blocks, panchayats }) {
               options={panchayats}
               nameProperty="gramPanchayatName"
               valueProperty="gramPanchayatId"
-              value={data?.gramPanchayat}
+              value={data.basicDetails?.gramPanchayat}
+              disabled
             />
           </div>
           <div className="space-y-2">
@@ -236,8 +101,9 @@ function BasicDetails({ data, designations, districts, blocks, panchayats }) {
               id="mobileNumber"
               name="mobileNumber"
               type="tel"
-              value={data?.mobileNumber}
+              value={data.basicDetails?.mobileNumber || ""}
               required
+              readOnly
             />
           </div>
           <div className="space-y-2">
@@ -248,8 +114,9 @@ function BasicDetails({ data, designations, districts, blocks, panchayats }) {
               id="whatsappMobileNumber"
               name="whatsappMobileNumber"
               type="tel"
-              value={data?.whatsappNumber}
+              value={data.basicDetails?.whatsappNumber || ""}
               required
+              readOnly
             />
           </div>
           <div className="space-y-2">
@@ -258,8 +125,9 @@ function BasicDetails({ data, designations, districts, blocks, panchayats }) {
               id="emailId"
               name="emailId"
               type="email"
-              value={data?.email}
+              value={data.basicDetails?.email || ""}
               required
+              readOnly
             />
           </div>
         </div>
@@ -274,34 +142,72 @@ function Profile() {
   const [districts, setDistricts] = useState([]);
   const [blocks, setBlocks] = useState([]);
   const [panchayats, setPanchayats] = useState([]);
+  const [profileData, setProfileData] = useState(null);
+  const [profileDocData, setProfileDocData] = useState(null);
+
+  const [loading, setLoading] = useState(true);
   const user = userStore((state) => state.user);
 
   useEffect(() => {
     (async () => {
-      let res2 = await getDistricts();
+      try {
+        setLoading(true);
 
-      setDesignations(userDesignations);
-      setDistricts(res2?.data);
-      let response = await getGramSevakById(user?.userId);
-      if (response.status === "success") {
-        var basicDetails = response.data.basicDetails;
-        console.log("Basic Details:", basicDetails);
-        let blockResponse = await getBlocksByDistrictId(
-          basicDetails?.district?.districtId
-        );
-        setBlocks(blockResponse?.data);
+        // Fetch profile data from the new endpoint
+        const profileResponse = await getProfileData();
 
-        let panchayatResponse = await getPanchayatByBlockId(
-          basicDetails?.gramPanchayat?.gramPanchayatId
-        );
-        setPanchayats(panchayatResponse?.data);
+        if (profileResponse) {
+          console.log("Profile response:", profileResponse.data.data);
+          const profileInfo = profileResponse.data.data.basicDetails;
+          setProfileData(profileInfo);
+          const docData = profileResponse.data.data.allDocuments;
+          setProfileDocData(docData);
 
-        setGramSevak(basicDetails);
-      } else {
-        toast.error("Unable to get gramsevak details");
+          const basicDetails = profileResponse.data.data;
+          setGramSevak(basicDetails);
+
+          // Load districts
+          const res2 = await getDistricts();
+          setDesignations(userDesignations);
+          setDistricts(res2?.data || []);
+
+          // Load blocks if district exists
+          if (basicDetails.basicDetails?.district?.districtId) {
+            const blockResponse = await getBlocksByDistrictId(
+              basicDetails.basicDetails?.district?.districtId || 0
+            );
+            setBlocks(blockResponse?.data || []);
+          }
+
+          // Load panchayats if block exists
+          if (basicDetails.basicDetails?.block?.blockId) {
+            const panchayatResponse = await getPanchayatByBlockId(
+              basicDetails.basicDetails?.block?.blockId || 0
+            );
+            setPanchayats(panchayatResponse?.data || []);
+          }
+        } else {
+          toast.error("प्रोफाइल माहिती मिळवू शकत नाही");
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        toast.error("प्रोफाइल लोड करताना त्रुटी आली");
+      } finally {
+        setLoading(false);
       }
     })();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">प्रोफाइल लोड करत आहे...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -322,11 +228,15 @@ function Profile() {
         </TabsContent>
         <TabsContent value="documents">
           <Card>
-            <CardContent className=" pt-6 gap-4">
-              {/* {documentMasterList.map((doc) => (
-                <DocumentUploadSection key={doc.id} doc={doc} />
-              ))} */}
-              <DocumentUpload />
+            <CardContent className="pt-6">
+              {profileData && (
+                <DocumentUpload
+                  userId={user?.userId}
+                  isProfileMode={true}
+                  uploadedDocuments={profileDocData || []}
+                  documentStatistics={profileData.documentStatistics}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -334,6 +244,7 @@ function Profile() {
     </div>
   );
 }
+
 export default WithAuthentication(
   WithPermission("profile")(WithLayout(Profile))
 );
