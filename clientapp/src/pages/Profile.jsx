@@ -147,6 +147,10 @@ function Profile() {
 
   const [loading, setLoading] = useState(true);
   const user = userStore((state) => state.user);
+  // Check if district is Pune
+  const isPuneDistrict =
+    profileData?.district?.districtName?.toLowerCase() === "pune" ||
+    profileData?.district?.districtName === "पुणे";
 
   useEffect(() => {
     (async () => {
@@ -215,7 +219,9 @@ function Profile() {
       <Tabs defaultValue="basic-details" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="basic-details">मूलभूत माहिती</TabsTrigger>
-          <TabsTrigger value="documents">कागदपत्रे</TabsTrigger>
+          {isPuneDistrict && (
+            <TabsTrigger value="documents">कागदपत्रे</TabsTrigger>
+          )}
         </TabsList>
         <TabsContent value="basic-details">
           <BasicDetails
@@ -226,20 +232,22 @@ function Profile() {
             panchayats={panchayats}
           />
         </TabsContent>
-        <TabsContent value="documents">
-          <Card>
-            <CardContent className="pt-6">
-              {profileData && (
-                <DocumentUpload
-                  userId={user?.userId}
-                  isProfileMode={true}
-                  uploadedDocuments={profileDocData || []}
-                  documentStatistics={profileData.documentStatistics}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {isPuneDistrict && (
+          <TabsContent value="documents">
+            <Card>
+              <CardContent className="pt-6">
+                {profileData && (
+                  <DocumentUpload
+                    userId={user?.userId}
+                    isProfileMode={true}
+                    uploadedDocuments={profileDocData || []}
+                    documentStatistics={profileData.documentStatistics}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

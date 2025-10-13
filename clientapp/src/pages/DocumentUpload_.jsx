@@ -405,12 +405,10 @@ const DocumentUpload = ({
                         <div
                           key={docType.documentTypeId}
                           onClick={() => {
-                            if (!isUploaded) {
-                              setSelectedDocType(docType);
-                              setFieldValues({});
-                              setValidationResult(null);
-                              setSelectedFile(null);
-                            }
+                            setSelectedDocType(docType);
+                            setFieldValues({});
+                            setValidationResult(null);
+                            setSelectedFile(null);
                           }}
                           className={cn(
                             "p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md relative",
@@ -418,7 +416,7 @@ const DocumentUpload = ({
                               docType.documentTypeId
                               ? "border-blue-500 bg-blue-50"
                               : isUploaded
-                              ? "border-green-500 bg-green-50 cursor-not-allowed"
+                              ? "border-green-500 bg-green-50"
                               : "border-gray-200 hover:border-gray-300"
                           )}
                         >
@@ -442,7 +440,7 @@ const DocumentUpload = ({
                           </p>
                           {isUploaded && (
                             <p className="text-xs text-green-600 mt-1">
-                              अपलोड झाले
+                              अपलोड झाले (पुन्हा अपलोड करण्यासाठी क्लिक करा)
                             </p>
                           )}
                         </div>
@@ -457,6 +455,18 @@ const DocumentUpload = ({
                       <h3 className="text-xl font-semibold text-gray-700 mb-4">
                         {selectedDocType.documentTypeNameEnglish} तपशील
                       </h3>
+
+                      {uploadedDocIds.has(selectedDocType.documentTypeId) && (
+                        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-6">
+                          <div className="flex items-start">
+                            <AlertCircle className="w-5 h-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                            <p className="text-sm text-yellow-800">
+                              हे कागदपत्र आधीच अपलोड केले आहे. तुम्ही नवीन फाईल
+                              अपलोड करून ते बदलू शकता.
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="bg-blue-50 p-4 rounded-lg mb-6">
                         <div className="flex items-start">
@@ -579,6 +589,10 @@ const DocumentUpload = ({
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                               अपलोड करत आहे...
                             </>
+                          ) : uploadedDocIds.has(
+                              selectedDocType.documentTypeId
+                            ) ? (
+                            "कागदपत्र पुन्हा अपलोड करा"
                           ) : (
                             "कागदपत्र अपलोड करा"
                           )}

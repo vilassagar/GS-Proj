@@ -302,16 +302,10 @@ function GramSevaks() {
                   </CardContent>
                 </Card>
               </TabsContent>
-
               <TabsContent value="documents">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      अपलोड केलेली कागदपत्रे
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <DocumentsDisplay documents={currentGramSevakDocs || []} />
+                  <CardContent className="pt-6">
+                    <DocumentsDisplay documents={currentGramSevakDocs} />
                   </CardContent>
                 </Card>
               </TabsContent>
