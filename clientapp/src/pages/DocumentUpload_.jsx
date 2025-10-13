@@ -39,7 +39,6 @@ const DocumentUpload = ({
     documentStatistics,
   });
   const navigate = useNavigate();
-  const user = userStore((state) => state.user);
   const markDocumentUploadComplete = userStore(
     (state) => state.markDocumentUploadComplete
   );

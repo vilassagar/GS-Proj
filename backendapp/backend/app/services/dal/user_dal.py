@@ -158,34 +158,25 @@ class UserDal:
         role = RoleDal.get_role_by_name(db, role_name)
         return user.role_id == role.id if role else False
 
-        @staticmethod
-        def get_gramsevaks(
-                db: Session,
-                role_id: int,
-                search_term: Optional[str] = None,
-                status_filter: Optional[ApprovalStatusRequest] = ApprovalStatusRequest.ALL
-        ) -> List[UserDTO]:
+    @staticmethod
+    def get_gramsevaks(
+        db: Session,
+        role_id: int,
+        search_term: Optional[str] = None,
+        status_filter: ApprovalStatusRequest = ApprovalStatusRequest.ALL
+    ) -> List[User]:
+        """
+        Fetch Gramsevaks by role, with optional search and status filter.
+        """
+        query = db.query(User).filter(User.role_id == role_id)
 
-            query = db.query(User).filter(
-                User.role_id == role_id,
-                User.is_active == True  # Ensure is_active is checked as a boolean
-            )
+        if search_term:
+            query = query.filter(User.block_name.ilike(f"%{search_term}%"))  # Adjust field as needed
 
-            if search_term:
-                query = query.filter(
-                    or_(
-                        User.first_name.ilike(f"%{search_term}%"),
-                        User.last_name.ilike(f"%{search_term}%"),
-                        User.email.ilike(f"%{search_term}%")
-                    )
-                )
+        if status_filter != ApprovalStatusRequest.ALL:
+            query = query.filter(User.status == status_filter.value)
 
-            # Only filter by status if not ALL
-            if status_filter != ApprovalStatusRequest.ALL:
-                query = query.filter(User.status == status_filter.value)
-
-            users = query.all()
-            return [UserDTO.to_dto(user) for user in users]
+        return query.all()
 
     @staticmethod
     def get_user_with_details_by_id(db: Session, user_id: int) -> Optional[UserDTO]:

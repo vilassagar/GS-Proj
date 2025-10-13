@@ -70,6 +70,36 @@ async def get_my_profile(
             detail=f"Error retrieving profile: {str(e)}"
         )
 
+    # Enhanced profile endpoint with ALL documents and their status for any user by userId
+    VxAPIPermsUtils.set_perm_get(path=router.prefix + '/getUserById', perm=VxAPIPermsEnum.AUTHENTICATED)
+    @router.get("/getUserById")
+    async def get_my_profile(
+        current_user: UserDTO = Depends(get_current_user),
+        db: Session = Depends(get_db)
+    ):
+        """
+        Get current user's complete profile including:
+        - Basic details
+        - ALL document types (mandatory and optional)
+        - Document submission status for each type
+        - Completion statistics
+        """
+        try:
+            profile_data = ProfileService.get_user_profile(db, current_user.user_id)
+        
+            return {
+                "success": True,
+                "data": profile_data
+            }
+        except Exception as e:
+            print(f"Error in get_my_profile: {e}")
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error retrieving profile: {str(e)}"
+            )
+
 # Get documents by status (PENDING, SUBMITTED, APPROVED, REJECTED)
 VxAPIPermsUtils.set_perm_get(path=router.prefix + '/documents/status', perm=VxAPIPermsEnum.AUTHENTICATED)
 @router.get("/documents/status")

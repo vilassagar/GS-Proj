@@ -80,12 +80,13 @@ class GramsevakService:
         for user in users:
             district = DistrictDal.get_district_by_id(db, user.district_id) if user.district_id is not None else None
             block = BlockDal.get_block_by_id(db, user.block_id) if user.block_id is not None else None
-
+            gramPanchayat=GramPanchayatDal.get_gram_panchayat_by_id(db,user.gram_panchayat_id) if user.gram_panchayat_id is not None else None
             result.append({
                 "id": user.id,
                 "firstName": user.first_name,
                 "lastName": user.last_name,
                 "email": user.email,
+                "gramPanchayat":gramPanchayat.gram_panchayat_name, 
                 "block": block.block_name if block else "N/A",
                 "district": district.district_name if district else "N/A",
                 "serviceId": 'temp_service_id',
@@ -216,6 +217,26 @@ class GramsevakService:
                 )
 
         UserDal.set_documents_uploaded_to_true(db=db, user_id=gramsevak_id)
+
+        # Check and handle mandatory documents logic
+        MANDATORY_DOC_IDS = [15, 10, 11,19,20,24,9]  # Example: replace with your actual mandatory doc IDs
+
+        def are_all_mandatory_docs_uploaded(db, user_id):
+            from app.models.documents import UserDocument
+            uploaded_doc_ids = set(
+                doc.document_type_id
+                for doc in db.query(UserDocument)
+                .filter_by(user_id=user_id)
+                .all()
+            )
+            return all(doc_id in uploaded_doc_ids for doc_id in MANDATORY_DOC_IDS)
+
+        # After uploading all documents
+        if are_all_mandatory_docs_uploaded(db, gramsevak_id):
+            # Mark DocumentUploadComplete (set a flag or status in DB)
+            user = db.query(User).filter_by(id=gramsevak_id).first()
+            user.document_upload_complete = True
+            db.commit()
 
         return {
             "message": "Documents uploaded successfully",

@@ -1,9 +1,264 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36127.28 d17.14
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11109.219
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "backend", "backend\backend.pyproj", "{8D391B25-E3DD-4F82-9D56-51164CB942E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "clientapp", "clientapp", "{133C255B-0E9E-45C6-8557-97DCD49A8B87}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\.env = ..\clientapp\.env
+		..\clientapp\.gitignore = ..\clientapp\.gitignore
+		..\clientapp\components.json = ..\clientapp\components.json
+		..\clientapp\eslint.config.js = ..\clientapp\eslint.config.js
+		..\clientapp\index.html = ..\clientapp\index.html
+		..\clientapp\jsconfig.json = ..\clientapp\jsconfig.json
+		..\clientapp\package-lock.json = ..\clientapp\package-lock.json
+		..\clientapp\package.json = ..\clientapp\package.json
+		..\clientapp\postcss.config.js = ..\clientapp\postcss.config.js
+		..\clientapp\README.md = ..\clientapp\README.md
+		..\clientapp\tailwind.config.js = ..\clientapp\tailwind.config.js
+		..\clientapp\vite.config.js = ..\clientapp\vite.config.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E56AF46C-9A08-4A38-9E9B-4701F00E267F}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\App.css = ..\clientapp\src\App.css
+		..\clientapp\src\App.jsx = ..\clientapp\src\App.jsx
+		..\clientapp\src\index.css = ..\clientapp\src\index.css
+		..\clientapp\src\main.jsx = ..\clientapp\src\main.jsx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cert", "cert", "{C1A49F12-E337-4255-981E-0051B4BD7E4B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "assets", "assets", "{452D10A4-1412-41B6-B88A-A102D8FF15EC}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\assets\react.svg = ..\clientapp\src\assets\react.svg
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "common", "common", "{1563FEA1-14A8-4C6D-999D-6C434B747DAE}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\common\constants.js = ..\clientapp\src\common\constants.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "components", "components", "{F7CE903E-F8E9-4821-B450-A39E81E59461}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "hooks", "hooks", "{4D8127D2-6477-4D8E-9871-C49CA1371741}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\hooks\use-toast.js = ..\clientapp\src\hooks\use-toast.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{AF63EB72-129A-4B8C-9226-26F150AE0AD7}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\lib\data.js = ..\clientapp\src\lib\data.js
+		..\clientapp\src\lib\helperFunctions.js = ..\clientapp\src\lib\helperFunctions.js
+		..\clientapp\src\lib\store.js = ..\clientapp\src\lib\store.js
+		..\clientapp\src\lib\useLocationHistory.js = ..\clientapp\src\lib\useLocationHistory.js
+		..\clientapp\src\lib\utils.js = ..\clientapp\src\lib\utils.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pages", "pages", "{28736408-DC36-4B0A-9A52-C42B36BD1049}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\pages\ApprovalPending.jsx = ..\clientapp\src\pages\ApprovalPending.jsx
+		..\clientapp\src\pages\BlockAdmins.jsx = ..\clientapp\src\pages\BlockAdmins.jsx
+		..\clientapp\src\pages\Books.jsx = ..\clientapp\src\pages\Books.jsx
+		..\clientapp\src\pages\Dashboard.jsx = ..\clientapp\src\pages\Dashboard.jsx
+		..\clientapp\src\pages\DistrictAdmins.jsx = ..\clientapp\src\pages\DistrictAdmins.jsx
+		..\clientapp\src\pages\DocumentUpload.jsx = ..\clientapp\src\pages\DocumentUpload.jsx
+		..\clientapp\src\pages\DocumentUpload_.jsx = ..\clientapp\src\pages\DocumentUpload_.jsx
+		..\clientapp\src\pages\GramSevaks.jsx = ..\clientapp\src\pages\GramSevaks.jsx
+		..\clientapp\src\pages\LandingPage.jsx = ..\clientapp\src\pages\LandingPage.jsx
+		..\clientapp\src\pages\Login.jsx = ..\clientapp\src\pages\Login.jsx
+		..\clientapp\src\pages\MyDashboard.jsx = ..\clientapp\src\pages\MyDashboard.jsx
+		..\clientapp\src\pages\Profile.jsx = ..\clientapp\src\pages\Profile.jsx
+		..\clientapp\src\pages\Register.jsx = ..\clientapp\src\pages\Register.jsx
+		..\clientapp\src\pages\UnauthorisedAccess.jsx = ..\clientapp\src\pages\UnauthorisedAccess.jsx
+		..\clientapp\src\pages\UploadBooks.jsx = ..\clientapp\src\pages\UploadBooks.jsx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "routes", "routes", "{1A0795B0-5876-4175-A2C6-6BE3DA4FEDA1}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\routes\index.jsx = ..\clientapp\src\routes\index.jsx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "services", "services", "{95939B16-E255-45D7-AF9F-4F05CA000969}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "utils", "utils", "{54C0DBB6-BAE3-4F4F-A16B-A849803F7681}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\utils\handleApiError.js = ..\clientapp\src\utils\handleApiError.js
+		..\clientapp\src\utils\httpClient.js = ..\clientapp\src\utils\httpClient.js
+		..\clientapp\src\utils\index.js = ..\clientapp\src\utils\index.js
+		..\clientapp\src\utils\result.js = ..\clientapp\src\utils\result.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "validations", "validations", "{0811A28E-6DE5-43B6-8632-6C1A12B1CCEB}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\validations\associationSchema.js = ..\clientapp\src\validations\associationSchema.js
+		..\clientapp\src\validations\beneficiarySchema.js = ..\clientapp\src\validations\beneficiarySchema.js
+		..\clientapp\src\validations\index.js = ..\clientapp\src\validations\index.js
+		..\clientapp\src\validations\nomineeSchema.js = ..\clientapp\src\validations\nomineeSchema.js
+		..\clientapp\src\validations\OrganisationSchema.js = ..\clientapp\src\validations\OrganisationSchema.js
+		..\clientapp\src\validations\paymentSchema.js = ..\clientapp\src\validations\paymentSchema.js
+		..\clientapp\src\validations\PermissionSchema.js = ..\clientapp\src\validations\PermissionSchema.js
+		..\clientapp\src\validations\productValidation.js = ..\clientapp\src\validations\productValidation.js
+		..\clientapp\src\validations\refundPaymentSchema.js = ..\clientapp\src\validations\refundPaymentSchema.js
+		..\clientapp\src\validations\RoleSchema.js = ..\clientapp\src\validations\RoleSchema.js
+		..\clientapp\src\validations\SignUpValidations.js = ..\clientapp\src\validations\SignUpValidations.js
+		..\clientapp\src\validations\userProfileSchema.js = ..\clientapp\src\validations\userProfileSchema.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "common", "common", "{57F87108-6624-42F9-A991-47527C5F32A5}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\components\common\DocumentsDisplay.jsx = ..\clientapp\src\components\common\DocumentsDisplay.jsx
+		..\clientapp\src\components\common\DocumentUploadForm.jsx = ..\clientapp\src\components\common\DocumentUploadForm.jsx
+		..\clientapp\src\components\common\DropDown.jsx = ..\clientapp\src\components\common\DropDown.jsx
+		..\clientapp\src\components\common\ErrorDisplay.jsx = ..\clientapp\src\components\common\ErrorDisplay.jsx
+		..\clientapp\src\components\common\FileUpload.jsx = ..\clientapp\src\components\common\FileUpload.jsx
+		..\clientapp\src\components\common\LoadingSpinner.jsx = ..\clientapp\src\components\common\LoadingSpinner.jsx
+		..\clientapp\src\components\common\YesNoQuestion.jsx = ..\clientapp\src\components\common\YesNoQuestion.jsx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "hoc", "hoc", "{0D6D4BBE-AB19-4C22-B7DF-BCBD8A0062BC}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\components\hoc\withAuthentication.jsx = ..\clientapp\src\components\hoc\withAuthentication.jsx
+		..\clientapp\src\components\hoc\withPermissions.jsx = ..\clientapp\src\components\hoc\withPermissions.jsx
+		..\clientapp\src\components\hoc\withProfile.jsx = ..\clientapp\src\components\hoc\withProfile.jsx
+		..\clientapp\src\components\hoc\withRole.jsx = ..\clientapp\src\components\hoc\withRole.jsx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "layout", "layout", "{3777246C-A6A1-49A3-897E-098699AD5AE7}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\components\layout\AppLayout.jsx = ..\clientapp\src\components\layout\AppLayout.jsx
+		..\clientapp\src\components\layout\AuthLayout.jsx = ..\clientapp\src\components\layout\AuthLayout.jsx
+		..\clientapp\src\components\layout\HeadLayout.jsx = ..\clientapp\src\components\layout\HeadLayout.jsx
+		..\clientapp\src\components\layout\WithAuthLayout.jsx = ..\clientapp\src\components\layout\WithAuthLayout.jsx
+		..\clientapp\src\components\layout\WithHeadLayout.jsx = ..\clientapp\src\components\layout\WithHeadLayout.jsx
+		..\clientapp\src\components\layout\WithLayout.jsx = ..\clientapp\src\components\layout\WithLayout.jsx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tables", "tables", "{15B7333F-ECDD-46F9-B327-740742ADD585}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\components\tables\GramSevakTable.jsx = ..\clientapp\src\components\tables\GramSevakTable.jsx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ui", "ui", "{10069419-7DBD-4C44-B6BA-8A5F15EE1A72}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\components\ui\accordion.jsx = ..\clientapp\src\components\ui\accordion.jsx
+		..\clientapp\src\components\ui\alert-dialog.jsx = ..\clientapp\src\components\ui\alert-dialog.jsx
+		..\clientapp\src\components\ui\button.jsx = ..\clientapp\src\components\ui\button.jsx
+		..\clientapp\src\components\ui\calendar.jsx = ..\clientapp\src\components\ui\calendar.jsx
+		..\clientapp\src\components\ui\card.jsx = ..\clientapp\src\components\ui\card.jsx
+		..\clientapp\src\components\ui\checkbox.jsx = ..\clientapp\src\components\ui\checkbox.jsx
+		..\clientapp\src\components\ui\comboBox.jsx = ..\clientapp\src\components\ui\comboBox.jsx
+		..\clientapp\src\components\ui\command.jsx = ..\clientapp\src\components\ui\command.jsx
+		..\clientapp\src\components\ui\confirmDialog.jsx = ..\clientapp\src\components\ui\confirmDialog.jsx
+		..\clientapp\src\components\ui\customDatePicker.jsx = ..\clientapp\src\components\ui\customDatePicker.jsx
+		..\clientapp\src\components\ui\dateInput.jsx = ..\clientapp\src\components\ui\dateInput.jsx
+		..\clientapp\src\components\ui\datePicker.jsx = ..\clientapp\src\components\ui\datePicker.jsx
+		..\clientapp\src\components\ui\dateRangePicker.jsx = ..\clientapp\src\components\ui\dateRangePicker.jsx
+		..\clientapp\src\components\ui\dialog.jsx = ..\clientapp\src\components\ui\dialog.jsx
+		..\clientapp\src\components\ui\dropdown-menu.jsx = ..\clientapp\src\components\ui\dropdown-menu.jsx
+		..\clientapp\src\components\ui\input.jsx = ..\clientapp\src\components\ui\input.jsx
+		..\clientapp\src\components\ui\label.jsx = ..\clientapp\src\components\ui\label.jsx
+		..\clientapp\src\components\ui\pagination.jsx = ..\clientapp\src\components\ui\pagination.jsx
+		..\clientapp\src\components\ui\popover.jsx = ..\clientapp\src\components\ui\popover.jsx
+		..\clientapp\src\components\ui\radio-group.jsx = ..\clientapp\src\components\ui\radio-group.jsx
+		..\clientapp\src\components\ui\rButton.jsx = ..\clientapp\src\components\ui\rButton.jsx
+		..\clientapp\src\components\ui\ResolutionCard.jsx = ..\clientapp\src\components\ui\ResolutionCard.jsx
+		..\clientapp\src\components\ui\rInput.jsx = ..\clientapp\src\components\ui\rInput.jsx
+		..\clientapp\src\components\ui\RPagination.jsx = ..\clientapp\src\components\ui\RPagination.jsx
+		..\clientapp\src\components\ui\RSelect.jsx = ..\clientapp\src\components\ui\RSelect.jsx
+		..\clientapp\src\components\ui\rTextArea.jsx = ..\clientapp\src\components\ui\rTextArea.jsx
+		..\clientapp\src\components\ui\scroll-area.jsx = ..\clientapp\src\components\ui\scroll-area.jsx
+		..\clientapp\src\components\ui\SearchComponent.jsx = ..\clientapp\src\components\ui\SearchComponent.jsx
+		..\clientapp\src\components\ui\select.jsx = ..\clientapp\src\components\ui\select.jsx
+		..\clientapp\src\components\ui\separator.jsx = ..\clientapp\src\components\ui\separator.jsx
+		..\clientapp\src\components\ui\sheet.jsx = ..\clientapp\src\components\ui\sheet.jsx
+		..\clientapp\src\components\ui\table.jsx = ..\clientapp\src\components\ui\table.jsx
+		..\clientapp\src\components\ui\tabs.jsx = ..\clientapp\src\components\ui\tabs.jsx
+		..\clientapp\src\components\ui\toast.jsx = ..\clientapp\src\components\ui\toast.jsx
+		..\clientapp\src\components\ui\toaster.jsx = ..\clientapp\src\components\ui\toaster.jsx
+		..\clientapp\src\components\ui\tooltip.jsx = ..\clientapp\src\components\ui\tooltip.jsx
+		..\clientapp\src\components\ui\use-toast.js = ..\clientapp\src\components\ui\use-toast.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "auth", "auth", "{9750C6B3-CFBD-4B63-BED0-0FF4FDD187D9}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\services\auth\index.js = ..\clientapp\src\services\auth\index.js
+		..\clientapp\src\services\auth\login.js = ..\clientapp\src\services\auth\login.js
+		..\clientapp\src\services\auth\register.js = ..\clientapp\src\services\auth\register.js
+		..\clientapp\src\services\auth\sendOtp.js = ..\clientapp\src\services\auth\sendOtp.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "block", "block", "{85D9DD24-F553-4480-9C7D-1A882459B128}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\services\block\getBlockAdmins.js = ..\clientapp\src\services\block\getBlockAdmins.js
+		..\clientapp\src\services\block\getUsers.js = ..\clientapp\src\services\block\getUsers.js
+		..\clientapp\src\services\block\index.js = ..\clientapp\src\services\block\index.js
+		..\clientapp\src\services\block\updateBlockAdmin.js = ..\clientapp\src\services\block\updateBlockAdmin.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "district", "district", "{CDEBB0EC-8A4F-401A-97DF-ADA8875A0C5A}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\services\district\getDistrictAdmins.js = ..\clientapp\src\services\district\getDistrictAdmins.js
+		..\clientapp\src\services\district\getUsers.js = ..\clientapp\src\services\district\getUsers.js
+		..\clientapp\src\services\district\index.js = ..\clientapp\src\services\district\index.js
+		..\clientapp\src\services\district\updateDistrictAdmin.js = ..\clientapp\src\services\district\updateDistrictAdmin.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "documentList", "documentList", "{8ABB9B11-1659-452C-ADDD-859BDB069EC6}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\services\documentList\getDocumentList.js = ..\clientapp\src\services\documentList\getDocumentList.js
+		..\clientapp\src\services\documentList\getUserDocuments.js = ..\clientapp\src\services\documentList\getUserDocuments.js
+		..\clientapp\src\services\documentList\index.js = ..\clientapp\src\services\documentList\index.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "governmentDoc", "governmentDoc", "{851C6380-485B-4345-9A7B-836AE0197105}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\services\governmentDoc\getUploadedDocuments.js = ..\clientapp\src\services\governmentDoc\getUploadedDocuments.js
+		..\clientapp\src\services\governmentDoc\index.js = ..\clientapp\src\services\governmentDoc\index.js
+		..\clientapp\src\services\governmentDoc\uploadGovernmentDoc.js = ..\clientapp\src\services\governmentDoc\uploadGovernmentDoc.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gramsevak", "gramsevak", "{0A87973F-46C0-4C42-BCC8-20B44F49AA71}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\services\gramsevak\changeStatus.js = ..\clientapp\src\services\gramsevak\changeStatus.js
+		..\clientapp\src\services\gramsevak\docUpload.js = ..\clientapp\src\services\gramsevak\docUpload.js
+		..\clientapp\src\services\gramsevak\getGramsevakById.js = ..\clientapp\src\services\gramsevak\getGramsevakById.js
+		..\clientapp\src\services\gramsevak\getGramsevakList.js = ..\clientapp\src\services\gramsevak\getGramsevakList.js
+		..\clientapp\src\services\gramsevak\index.js = ..\clientapp\src\services\gramsevak\index.js
+		..\clientapp\src\services\gramsevak\updateBasicDetails.js = ..\clientapp\src\services\gramsevak\updateBasicDetails.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "preset", "preset", "{B33A9126-C4C9-481D-ACD9-C5BD43B00B85}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\services\preset\getBlocksByDistrictId.js = ..\clientapp\src\services\preset\getBlocksByDistrictId.js
+		..\clientapp\src\services\preset\getDepartments.js = ..\clientapp\src\services\preset\getDepartments.js
+		..\clientapp\src\services\preset\getDesignations.js = ..\clientapp\src\services\preset\getDesignations.js
+		..\clientapp\src\services\preset\getDistricts.js = ..\clientapp\src\services\preset\getDistricts.js
+		..\clientapp\src\services\preset\getPanchayatByBlockId.js = ..\clientapp\src\services\preset\getPanchayatByBlockId.js
+		..\clientapp\src\services\preset\getYojanas.js = ..\clientapp\src\services\preset\getYojanas.js
+		..\clientapp\src\services\preset\index.js = ..\clientapp\src\services\preset\index.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "profile", "profile", "{4BF1F9BF-915C-408A-B749-7F2764CED700}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\services\profile\getProfileData.js = ..\clientapp\src\services\profile\getProfileData.js
+		..\clientapp\src\services\profile\index.js = ..\clientapp\src\services\profile\index.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "upload", "upload", "{622E4CB8-413C-4AB1-B329-5AA5A3025C30}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\services\upload\getDocuments.js = ..\clientapp\src\services\upload\getDocuments.js
+		..\clientapp\src\services\upload\getUserDocuments.js = ..\clientapp\src\services\upload\getUserDocuments.js
+		..\clientapp\src\services\upload\index.js = ..\clientapp\src\services\upload\index.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "user", "user", "{09E59418-551E-417D-921C-3E56AEDEF2F1}"
+	ProjectSection(SolutionItems) = preProject
+		..\clientapp\src\services\user\getUserById.js = ..\clientapp\src\services\user\getUserById.js
+		..\clientapp\src\services\user\index.js = ..\clientapp\src\services\user\index.js
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,6 +273,35 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E56AF46C-9A08-4A38-9E9B-4701F00E267F} = {133C255B-0E9E-45C6-8557-97DCD49A8B87}
+		{C1A49F12-E337-4255-981E-0051B4BD7E4B} = {133C255B-0E9E-45C6-8557-97DCD49A8B87}
+		{452D10A4-1412-41B6-B88A-A102D8FF15EC} = {E56AF46C-9A08-4A38-9E9B-4701F00E267F}
+		{1563FEA1-14A8-4C6D-999D-6C434B747DAE} = {E56AF46C-9A08-4A38-9E9B-4701F00E267F}
+		{F7CE903E-F8E9-4821-B450-A39E81E59461} = {E56AF46C-9A08-4A38-9E9B-4701F00E267F}
+		{4D8127D2-6477-4D8E-9871-C49CA1371741} = {E56AF46C-9A08-4A38-9E9B-4701F00E267F}
+		{AF63EB72-129A-4B8C-9226-26F150AE0AD7} = {E56AF46C-9A08-4A38-9E9B-4701F00E267F}
+		{28736408-DC36-4B0A-9A52-C42B36BD1049} = {E56AF46C-9A08-4A38-9E9B-4701F00E267F}
+		{1A0795B0-5876-4175-A2C6-6BE3DA4FEDA1} = {E56AF46C-9A08-4A38-9E9B-4701F00E267F}
+		{95939B16-E255-45D7-AF9F-4F05CA000969} = {E56AF46C-9A08-4A38-9E9B-4701F00E267F}
+		{54C0DBB6-BAE3-4F4F-A16B-A849803F7681} = {E56AF46C-9A08-4A38-9E9B-4701F00E267F}
+		{0811A28E-6DE5-43B6-8632-6C1A12B1CCEB} = {E56AF46C-9A08-4A38-9E9B-4701F00E267F}
+		{57F87108-6624-42F9-A991-47527C5F32A5} = {F7CE903E-F8E9-4821-B450-A39E81E59461}
+		{0D6D4BBE-AB19-4C22-B7DF-BCBD8A0062BC} = {F7CE903E-F8E9-4821-B450-A39E81E59461}
+		{3777246C-A6A1-49A3-897E-098699AD5AE7} = {F7CE903E-F8E9-4821-B450-A39E81E59461}
+		{15B7333F-ECDD-46F9-B327-740742ADD585} = {F7CE903E-F8E9-4821-B450-A39E81E59461}
+		{10069419-7DBD-4C44-B6BA-8A5F15EE1A72} = {F7CE903E-F8E9-4821-B450-A39E81E59461}
+		{9750C6B3-CFBD-4B63-BED0-0FF4FDD187D9} = {95939B16-E255-45D7-AF9F-4F05CA000969}
+		{85D9DD24-F553-4480-9C7D-1A882459B128} = {95939B16-E255-45D7-AF9F-4F05CA000969}
+		{CDEBB0EC-8A4F-401A-97DF-ADA8875A0C5A} = {95939B16-E255-45D7-AF9F-4F05CA000969}
+		{8ABB9B11-1659-452C-ADDD-859BDB069EC6} = {95939B16-E255-45D7-AF9F-4F05CA000969}
+		{851C6380-485B-4345-9A7B-836AE0197105} = {95939B16-E255-45D7-AF9F-4F05CA000969}
+		{0A87973F-46C0-4C42-BCC8-20B44F49AA71} = {95939B16-E255-45D7-AF9F-4F05CA000969}
+		{B33A9126-C4C9-481D-ACD9-C5BD43B00B85} = {95939B16-E255-45D7-AF9F-4F05CA000969}
+		{4BF1F9BF-915C-408A-B749-7F2764CED700} = {95939B16-E255-45D7-AF9F-4F05CA000969}
+		{622E4CB8-413C-4AB1-B329-5AA5A3025C30} = {95939B16-E255-45D7-AF9F-4F05CA000969}
+		{09E59418-551E-417D-921C-3E56AEDEF2F1} = {95939B16-E255-45D7-AF9F-4F05CA000969}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0C763DCE-7B80-4A1F-B27F-E3BC54C3B3B0}

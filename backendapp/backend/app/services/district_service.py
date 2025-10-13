@@ -8,6 +8,7 @@ from app.schemas.district_schema import (
     DistrictAdminResponseSchema,
     DistrictAdminUpdateResponse
 )
+from app.schemas.block_schema import BlockAdminUserSchema  # <-- Add this import
 from app.core.core_exceptions import NotFoundException, InvalidRequestException
 
 
@@ -43,10 +44,10 @@ class DistrictService:
                 district_name=district.district_name,
                 admin=(
                     None if not admins else
-                        DistrictAdminResponseSchema.admin.__annotations__['__class__'](
-                        user_id=admins[0].id,
-                        user_name=f"{admins[0].first_name} {admins[0].last_name}"
-                    )
+                        BlockAdminUserSchema(  # <-- Fix: use the correct schema class
+                            user_id=admins[0].id,
+                            user_name=f"{admins[0].first_name} {admins[0].last_name}"
+                        )
                 )
             ))
 
@@ -89,7 +90,7 @@ class DistrictService:
             admin_details=DistrictAdminResponseSchema(
                 district_id=district.district_id,
                 district_name=district.district_name,
-                admin=DistrictAdminResponseSchema.admin.__annotations__['__class__'](
+                admin=BlockAdminUserSchema(  # <-- Fix: use the correct schema class
                     user_id=updated_user.id,
                     user_name=f"{updated_user.first_name} {updated_user.last_name}"
                 )

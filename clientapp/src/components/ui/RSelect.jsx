@@ -56,7 +56,11 @@ export default function RSelect({
         <SelectTrigger>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent
+          position="popper"
+          sideOffset={4}
+          className="max-h-[300px] overflow-y-auto"
+        >
           {options.map((option) => (
             <SelectItem
               key={`${option[nameProperty]}-${option[valueProperty]}`}

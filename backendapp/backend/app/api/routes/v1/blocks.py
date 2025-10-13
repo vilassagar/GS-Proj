@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from app.config import get_db
 from app.core.core_exceptions import InvalidRequestException
@@ -18,19 +18,29 @@ router = APIRouter(
 
 # VxAPIPermsUtils.set_perm_get(path=router.prefix + '/get-block-admins', perm=VxAPIPermsEnum.ADMIN_READ)
 VxAPIPermsUtils.set_perm_get(path=router.prefix + '/getBlockAdmins', perm=VxAPIPermsEnum.PUBLIC)
-@router.get("/getBlockAdmins", response_model=List[BlockAdminResponseSchema],
-            summary="Get block admins by district",
-            description="Returns list of districts with their block admins")
-async def get_block_admins(db: Session = Depends(get_db),
-                           searcTerm=Query(default=None, description="Searching by block name")
-                           # requesting_user: UserDTO = Depends(get_current_user)
-                           ):
+@router.get(
+    "/getBlockAdmins",
+    response_model=List[BlockAdminResponseSchema],
+    summary="Get block admins by district",
+    description="Returns list of districts with their block admins"
+)
+async def get_block_admins(
+    db: Session = Depends(get_db),
+    searcTerm: Optional[str] = Query(default=None, description="Searching by block name"),
+    page: int = Query(default=1, ge=1, description="Page number"),
+    page_size: int = Query(default=50, ge=1, le=100, description="Rows per page (default 50, max 100)")
+    # requesting_user: UserDTO = Depends(get_current_user)
+):
     # Todo check requirements who can call?
 
     # if requesting_user.role_id not in (1, 2):
     #     raise InvalidRequestException("Requesting User not authorized")
 
-    return BlockService.get_block_admins(db, search_term=searcTerm)
+    # Pagination is not supported in BlockService.get_block_admins, so only pass supported arguments
+    return BlockService.get_block_admins(
+        db,
+        search_term=searcTerm
+    )
 
 
 # Todo make this perm and then we can remove the is_admin check `ADMIN_WRITE`

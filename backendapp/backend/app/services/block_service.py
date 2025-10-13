@@ -10,71 +10,77 @@ from app.core.core_exceptions import NotFoundException, InvalidRequestException
 
 class BlockService:
     @staticmethod
-    def get_block_admins(db: Session, search_term: Optional[str] = None) -> List[BlockAdminResponseSchema]:
+    def get_block_admins(
+        db: Session,
+        search_term: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 50
+    ) -> List[BlockAdminResponseSchema]:
+        """Get block admins with pagination support"""
         # Get Block Admin role
         block_admin_role = RoleDal.get_role_by_name(db, "blockAdmin")
         if not block_admin_role:
             raise NotFoundException("Block Admin role not configured")
-
+        
         # Get blocks based on search term
         if search_term:
             blocks = BlockDal.get_blocks_by_search_term(db, search_term)
         else:
             blocks = BlockDal.get_all_active_blocks(db)
-
+        
+        # Apply pagination
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size
+        paginated_blocks = blocks[start_idx:end_idx]
+        
         result = []
-        for block in blocks:
+        for block in paginated_blocks:
             # Get admins assigned to this specific block
             admins = UserDal.get_users_by_role_and_block(
                 db=db,
                 role_id=block_admin_role.id,
                 block_id=block.block_id
             )
-
+            
             result.append(BlockAdminResponseSchema(
                 block_id=block.block_id,
                 block_name=block.block_name,
                 admin=BlockAdminUserSchema(
-                    # **admins[0]
                     user_id=admins[0].id,
                     user_name=f"{admins[0].first_name} {admins[0].last_name}"
                 ) if admins else None
             ))
-
+        
         return result
 
     @staticmethod
-    def update_block_admin(db: Session, block_id: int,
-                           user_id: int, updated_by: int) -> BlockAdminUpdateResponse:
-        # Checking if block exists
+    def update_block_admin(
+        db: Session,
+        block_id: int,
+        user_id: int,
+        updated_by: int
+    ) -> BlockAdminUpdateResponse:
+        """Update block admin for a specific block"""
+        # Check if block exists
         block = BlockDal.get_block_by_id(db, block_id)
-
-        print("In Update block admin service layer")
-
         if not block:
-            raise NotFoundException(f"block with ID {block_id} not found")
-
-        print("Block found")
-
-        # Checking if user exists
+            raise NotFoundException(f"Block with ID {block_id} not found")
+        
+        # Check if user exists and is active
         user = UserDal.get_user_by_id(db, user_id)
         if not user or not user.is_active:
             raise NotFoundException(f"Active user with ID {user_id} not found")
-
-        print("User Found")
-
-        # Checking if user belongs to provided block
-        # Todo check whether we need below condition
+        
+        # Verify user belongs to the provided block
         if user.block_id != block_id:
-            raise InvalidRequestException(f"User {user_id} does not belong to {block_id}")
-
-        print("User Found")
-
+            raise InvalidRequestException(
+                f"User {user_id} does not belong to block {block_id}"
+            )
+        
+        # Update current block admin to GS (Gram Sevak)
         UserDal.update_block_admin_to_gs(db=db, block_id=block_id)
-
-        print("Curr block admin updated GS")
-
-        # Updating the role for user to block admin
+        
+        # Update the user's role to block admin (role_id=3)
         updated_user = UserDal.update_user(
             db=db,
             user_id=user_id,
@@ -84,7 +90,7 @@ class BlockService:
                 "updated_by": updated_by
             }
         )
-
+        
         return BlockAdminUpdateResponse(
             success=True,
             message="Block admin updated successfully",
@@ -97,4 +103,3 @@ class BlockService:
                 )
             )
         )
-
